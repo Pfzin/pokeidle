@@ -1,0 +1,2946 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokeIdle Manager v3.0 — Fórmulas Oficiais da Wiki, Multi-Contas & Histórico</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            game: {
+              bg: '#110d17',
+              card: '#1b1424',
+              cardHover: '#241b30',
+              border: '#342645',
+              accent: '#f59e0b',
+              purple: '#8b5cf6',
+              emerald: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #110d17;
+      color: #f3f0f7;
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #110d17; }
+    ::-webkit-scrollbar-thumb { background: #342645; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4d3966; }
+    .tab-active {
+      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+      color: #ffffff;
+      border-color: #a78bfa;
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    }
+    .acc-active {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #ffffff;
+      border-color: #fbbf24;
+      box-shadow: 0 3px 12px rgba(217, 119, 6, 0.35);
+    }
+    /* Selos de Potência P1 a P5 e Lendário */
+    .p-badge-P1 { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+    .p-badge-P2 { background: #065f46; color: #6ee7b7; border: 1px solid #10b981; }
+    .p-badge-P3 { background: #1e40af; color: #93c5fd; border: 1px solid #3b82f6; }
+    .p-badge-P4 { background: #5b21b6; color: #ddd6fe; border: 1px solid #8b5cf6; }
+    .p-badge-P5 { background: linear-gradient(135deg, #b45309, #92400e); color: #fde68a; border: 1px solid #f59e0b; }
+    .p-badge-LEG { background: linear-gradient(135deg, #be185d, #7e22ce); color: #fbcfe8; border: 1px solid #f472b6; }
+
+    /* Animações das Faixas de Nota (Wiki) */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 6px rgba(168, 85, 247, 0.35); }
+      50% { box-shadow: 0 0 14px rgba(236, 72, 153, 0.7); }
+    }
+    .note-glow { animation: pulseGlow 2.4s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast de Notificação -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-2 opacity-0">
+    <div class="bg-emerald-950/95 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+      <span class="text-lg">✓</span>
+      <span id="toast-msg" class="text-sm font-medium">Salvo com sucesso!</span>
+    </div>
+  </div>
+
+  <!-- Modal Visão Geral das 4 Contas -->
+  <div id="overview-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-game-card border border-game-border rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-game-border pb-3">
+        <div>
+          <h3 class="text-lg font-extrabold text-white">Visão Geral Consolidada das 4 Contas</h3>
+          <p class="text-xs text-gray-400">Soma diária e semanal de drops na Outland, saldos e produção combinada.</p>
+        </div>
+        <button onclick="toggleOverviewModal(false)" class="bg-game-bg hover:bg-game-cardHover border border-game-border text-gray-300 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer">Fechar ✕</button>
+      </div>
+      <div id="overview-modal-body" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- Modal Inspecionar Time do Histórico -->
+  <div id="team-snapshot-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-game-card border border-game-border rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-game-border pb-3">
+        <div>
+          <h3 id="snapshot-modal-title" class="text-base font-extrabold text-white">Retrato da Equipe na Data</h3>
+          <p id="snapshot-modal-subtitle" class="text-xs text-gray-400"></p>
+        </div>
+        <button onclick="document.getElementById('team-snapshot-modal').classList.add('hidden')" class="bg-game-bg hover:bg-game-cardHover border border-game-border text-gray-300 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer">Fechar ✕</button>
+      </div>
+      <div id="snapshot-modal-body" class="overflow-x-auto"></div>
+    </div>
+  </div>
+
+  <!-- Cabeçalho Superior + Seletor Multi-Contas -->
+  <header class="bg-[#181121] border-b border-game-border sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-purple-700 flex items-center justify-center font-extrabold text-white text-lg shadow-lg">
+          PI
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            PokeIdle Manager
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Wiki Oficial Calibrada</span>
+          </h1>
+          <p class="text-[11px] text-gray-400">XP Cúbico Exato • Poder ⚔ &amp; Nota N= • Radar Elemental PvP • Multi-Contas</p>
+        </div>
+      </div>
+
+      <!-- Barra de Contas -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <div id="account-switcher-bar" class="flex flex-wrap items-center gap-1.5"></div>
+        <button onclick="toggleOverviewModal(true)" class="bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/60 text-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+          📊 Soma 4 Contas
+        </button>
+      </div>
+
+      <!-- Backup JSON -->
+      <div class="flex items-center gap-1.5 text-xs">
+        <button onclick="exportData()" title="Exportar backup completo das 4 contas" class="bg-game-card hover:bg-game-cardHover border border-game-border text-gray-200 px-2.5 py-1.5 rounded-xl font-medium transition cursor-pointer">
+          Exportar
+        </button>
+        <label title="Importar backup JSON" class="bg-game-card hover:bg-game-cardHover border border-game-border text-gray-200 px-2.5 py-1.5 rounded-xl font-medium transition cursor-pointer">
+          Importar
+          <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)" />
+        </label>
+        <button onclick="confirmReset()" title="Restaurar dados padrão" class="bg-red-950/50 hover:bg-red-900/60 border border-red-800/60 text-red-300 px-2.5 py-1.5 rounded-xl font-medium transition cursor-pointer">
+          Resetar
+        </button>
+      </div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="max-w-7xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto">
+      <button id="btn-tab-team" onclick="switchTab('team')" class="tab-active px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-transparent transition whitespace-nowrap cursor-pointer">
+        1. Equipe, Conta &amp; Radar Elemental
+      </button>
+      <button id="btn-tab-compare" onclick="switchTab('compare')" class="bg-game-card hover:bg-game-cardHover text-gray-300 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-game-border transition whitespace-nowrap cursor-pointer">
+        2. Simulador "E Se?" &amp; Comparador (2 Pokémon)
+      </button>
+      <button id="btn-tab-outland" onclick="switchTab('outland')" class="bg-game-card hover:bg-game-cardHover text-gray-300 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-game-border transition whitespace-nowrap cursor-pointer">
+        3. Outland &amp; XP Cúbico Exato
+      </button>
+      <button id="btn-tab-history" onclick="switchTab('history')" class="bg-game-card hover:bg-game-cardHover text-gray-300 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-game-border transition whitespace-nowrap cursor-pointer">
+        4. Inventário, ROI Bosses &amp; Histórico
+      </button>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
+
+    <!-- ===================================================================== -->
+    <!-- ABA 1: EQUIPE, CONTA & RADAR ELEMENTAL PVP                            -->
+    <!-- ===================================================================== -->
+    <section id="tab-team" class="space-y-6">
+      
+      <!-- Painel Editável dos Dados Gerais da Conta Selecionada -->
+      <div class="bg-game-card border border-game-border rounded-2xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider font-bold text-amber-400">Conta Ativa Selecionada</span>
+            <h2 id="acc-panel-title" class="text-lg font-extrabold text-white">Conta Principal</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="acc-unlocked-badge" class="bg-purple-900/70 border border-purple-600/50 text-purple-200 px-3 py-1 rounded-xl text-xs font-bold">
+              Outland 7 (1,65x) Desbloqueada
+            </span>
+            <button onclick="quickSaveSnapshotFromTab1()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition cursor-pointer">
+              💾 Salvar Snapshot de Hoje
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Nome da Conta</label>
+            <input type="text" id="acc-name-input" oninput="updateAccountField('name', this.value)" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-amber-300 font-semibold mb-1">Nível do Treinador</label>
+            <input type="number" id="acc-level-input" min="1" max="100000" oninput="updateAccountField('trainerLevel', Number(this.value))" class="w-full bg-game-bg border border-amber-500/40 rounded-xl px-3 py-2 text-xs font-extrabold text-amber-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-amber-200 mb-1">Ouro Atual (Milhões / M)</label>
+            <input type="number" id="acc-gold-input" step="0.1" min="0" oninput="updateAccountField('gold', Number(this.value))" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-sky-300 mb-1">Gemas Atuais</label>
+            <input type="number" id="acc-gems-input" step="1" min="0" oninput="updateAccountField('gems', Number(this.value))" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-sky-300" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-300 mb-1">Abates/Hora (Outland)</label>
+            <input type="number" id="acc-kills-input" min="1" oninput="updateAccountField('killsPerHour', Number(this.value))" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-purple-300 mb-1">XP/Hora na Hunt Atual</label>
+            <input type="number" id="acc-xph-input" min="1" oninput="updateAccountField('xpPerHour', Number(this.value))" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-purple-300" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-game-border/60 text-xs">
+          <div class="flex flex-wrap items-center gap-4">
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="acc-lootboost-input" onchange="updateAccountField('lootBonus', this.checked ? 40 : 0)" class="w-4 h-4 rounded accent-emerald-500" />
+              <span class="text-emerald-300 font-semibold">Loot Boost Ativo (+40% Drop Outland)</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <span class="text-gray-400">Bônus de XP Ativo (%):</span>
+              <input type="number" id="acc-xpbonus-input" step="0.1" min="0" oninput="updateAccountField('xpBonus', Number(this.value))" class="w-20 bg-game-bg border border-game-border rounded-lg px-2 py-1 text-xs text-white font-semibold" />
+            </div>
+          </div>
+          <div id="acc-xp-total-summary" class="text-gray-300 font-medium"></div>
+        </div>
+      </div>
+
+      <!-- Cards de Resumo da Equipe -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-game-card border border-game-border rounded-2xl p-4">
+          <div class="text-xs text-gray-400 font-medium">Poder na Luta Total (PvP Real)</div>
+          <div id="team-total-real-pvp-power" class="text-2xl font-extrabold text-emerald-400 mt-1">114.875</div>
+          <div id="team-calc-pvp-sword" class="text-[11px] text-emerald-300/80 mt-1">⚔ PvP Fórmula Wiki: 0</div>
+        </div>
+        <div class="bg-game-card border border-game-border rounded-2xl p-4">
+          <div class="text-xs text-gray-400 font-medium">Poder Ranking Total (⚔ Ficha)</div>
+          <div id="team-total-ranking-sword" class="text-2xl font-extrabold text-amber-400 mt-1">16.002</div>
+          <div class="text-[11px] text-gray-400 mt-1">Fórmula: arred(nível × 10 × score)</div>
+        </div>
+        <div class="bg-game-card border border-game-border rounded-2xl p-4">
+          <div class="text-xs text-gray-400 font-medium">Nível Real vs. Comprimido PvP</div>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="team-total-real-lvl" class="text-2xl font-extrabold text-white">3.838</span>
+            <span id="team-total-pvp-lvl" class="text-sm font-bold text-purple-300">(PvP: 1.517)</span>
+          </div>
+          <div id="team-avg-real-lvl" class="text-[11px] text-gray-400 mt-1">Média Real: Nv 767,6</div>
+        </div>
+        <div class="bg-game-card border border-game-border rounded-2xl p-4">
+          <div class="text-xs text-gray-400 font-medium">Composição &amp; Multiplicadores</div>
+          <div id="team-mult-summary" class="text-base font-bold text-purple-300 mt-1">1× P5 • 1× P2 • 3× P1</div>
+          <div id="team-shiny-summary" class="text-[11px] text-gray-400 mt-1">0 Shinies • +3 Refinos totais</div>
+        </div>
+      </div>
+
+      <!-- ALERTA AUTOMÁTICO DE COBERTURA ELEMENTAL PVP -->
+      <div class="bg-game-card border border-amber-600/40 rounded-2xl p-5 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-2.5">
+          <div>
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+              🛡️ Radar Automático de Cobertura &amp; Fraquezas Elementais (18 Tipos)
+            </h3>
+            <p class="text-xs text-gray-400">Calcula em tempo real as fraquezas 4×, fraquezas 2× descobertas e resistências da equipe cadastrada.</p>
+          </div>
+          <span id="coverage-score-badge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40"></span>
+        </div>
+        <div id="coverage-alerts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"></div>
+      </div>
+
+      <!-- Grade de Pokémon da Equipe -->
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="text-base font-bold text-white">Equipe Cadastrada Nesta Conta (Com Faixa de Nota N=, Poder ⚔ e HP de Combate)</h3>
+          <button onclick="addNewPokemonSlot()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer">
+            + Adicionar Pokémon à Conta
+          </button>
+        </div>
+        <div id="team-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"></div>
+      </div>
+
+      <!-- Painel de Edição Detalhada + Importador de Ficha -->
+      <div class="bg-game-card border border-game-border rounded-2xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3">
+          <div>
+            <h3 class="text-base font-bold text-white">Editar Todos os Dados do Pokémon / Colar Ficha ("Copiar p/ ChatGPT")</h3>
+            <p class="text-xs text-gray-400">Altere Nota N=, Poder ⚔, Potência, Qualidade, Refino ou IVs — o score e o HP de combate recalculam pelas fórmulas da Wiki.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">Editando Slot:</span>
+            <select id="form-slot-select" onchange="loadSlotIntoForm(this.value)" class="bg-game-bg border border-game-border rounded-xl px-3 py-1.5 text-xs font-bold text-white"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-4 space-y-2">
+            <label class="block text-xs font-semibold text-purple-300">Colar Ficha Copiada do Jogo</label>
+            <textarea id="paste-sheet-input" rows="7" placeholder="Cole aqui a ficha copiada do jogo (inclusive do botão Copiar p/ ChatGPT)...&#10;Ex:&#10;Tyranitar Nv 1596 P1 IV 126 Q 1,754 N 3,532 +3&#10;Poder: 6.377 | Poder na luta: 66.837" class="w-full bg-game-bg border border-game-border rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-purple-500"></textarea>
+            <div class="flex gap-2">
+              <button type="button" onclick="parsePokemonSheetToForm()" class="flex-1 bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition cursor-pointer">
+                Extrair Dados da Ficha
+              </button>
+              <button type="button" onclick="document.getElementById('paste-sheet-input').value=''" class="bg-game-bg hover:bg-game-cardHover border border-game-border text-gray-400 text-xs py-2 px-3 rounded-xl cursor-pointer">
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          <form id="pokemon-form" onsubmit="savePokemonForm(event)" class="lg:col-span-8 space-y-3">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Espécie (Preset)</label>
+                <select id="form-species-preset" onchange="applySpeciesPresetToForm(this.value)" class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Nome Exibido</label>
+                <input type="text" id="form-name" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Tipo 1</label>
+                <select id="form-type1" class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Tipo 2</label>
+                <select id="form-type2" class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-emerald-400 font-bold mb-1">Poder na Luta (PvP)</label>
+                <input type="number" id="form-pvp-power" min="0" required class="w-full bg-game-bg border border-emerald-500/40 rounded-lg px-2 py-1.5 text-xs text-emerald-300 font-extrabold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Nível Real</label>
+                <input type="number" id="form-level" min="1" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Potência</label>
+                <select id="form-potency" class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white">
+                  <option value="P1">P1 (1,00x)</option>
+                  <option value="P2">P2 (1,05x)</option>
+                  <option value="P3">P3 (1,10x)</option>
+                  <option value="P4">P4 (1,25x)</option>
+                  <option value="P5">P5 (2,00x)</option>
+                  <option value="LEG">Lendário (4,00x)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Qualidade (Q)</label>
+                <input type="number" id="form-quality" step="0.001" min="0.1" max="3" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-gray-400 mb-1">Refino (+N)</label>
+                <input type="number" id="form-refine" min="0" max="100" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-purple-300 font-semibold mb-1">Nota N= (0–10)</label>
+                <input type="number" id="form-note" step="0.001" min="0" max="10" required class="w-full bg-game-bg border border-purple-500/40 rounded-lg px-2 py-1.5 text-xs text-purple-200 font-bold" />
+              </div>
+              <div class="flex flex-col justify-end pb-1">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" id="form-shiny" class="w-4 h-4 rounded accent-amber-500" />
+                  <span class="text-xs font-bold text-amber-300">✨ Shiny (3x)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div class="bg-game-bg/70 p-2.5 rounded-xl border border-game-border">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-sky-300 font-semibold">IVs Individuais (1–32)</span>
+                  <span id="form-iv-sum" class="font-bold text-sky-400">Total: 126</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1">
+                  <div><span class="block text-[9px] text-center text-gray-400">HP</span><input type="number" id="form-iv-hp" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-400">ATK</span><input type="number" id="form-iv-atk" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-400">DEF</span><input type="number" id="form-iv-def" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-400">SPA</span><input type="number" id="form-iv-spa" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-400">SPD</span><input type="number" id="form-iv-spd" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-400">SPE</span><input type="number" id="form-iv-spe" min="0" max="32" oninput="updateFormIvSum()" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" /></div>
+                </div>
+              </div>
+
+              <div class="bg-game-bg/70 p-2.5 rounded-xl border border-game-border">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-gray-400 font-semibold">Base Stats da Espécie</span>
+                  <span class="text-amber-300 font-semibold">Poder Ranking ⚔ (Opcional)</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1">
+                  <div><span class="block text-[9px] text-center text-gray-500">HP</span><input type="number" id="form-base-hp" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-500">ATK</span><input type="number" id="form-base-atk" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-500">DEF</span><input type="number" id="form-base-def" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-500">SPA</span><input type="number" id="form-base-spa" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-500">SPD</span><input type="number" id="form-base-spd" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-gray-500">SPE</span><input type="number" id="form-base-spe" min="1" max="255" class="w-full bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" /></div>
+                  <div><span class="block text-[9px] text-center text-amber-400">⚔</span><input type="number" id="form-ranking-power" min="0" placeholder="Auto" class="w-full bg-game-card border border-amber-500/40 rounded py-1 text-xs text-center text-amber-300 font-bold" /></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-2 pt-1">
+              <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow transition cursor-pointer">
+                Salvar Alterações neste Pokémon
+              </button>
+              <button type="button" onclick="deleteCurrentPokemonSlot()" class="bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 font-semibold text-xs py-2.5 px-4 rounded-xl transition cursor-pointer">
+                Remover Slot
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ABA 2: SIMULADOR "E SE?" & COMPARADOR DE STATS BRUTOS (2 POKÉMON)     -->
+    <!-- ===================================================================== -->
+    <section id="tab-compare" class="hidden space-y-6">
+      
+      <div class="bg-game-card border border-game-border rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3 mb-4">
+          <div>
+            <h2 class="text-base font-extrabold text-white">Simulador "E Se?" &amp; Comparador Lado a Lado (Fórmulas Oficiais da Wiki)</h2>
+            <p class="text-xs text-gray-400">Compara Stats Brutos (Hunt), Stats Comprimidos (PvP), HP de Combate (hp × 12), Poder Ranking ⚔ e Poder PvP ⚔.</p>
+          </div>
+          <button onclick="swapCompareSides()" class="bg-purple-900/60 hover:bg-purple-800 border border-purple-600/50 text-purple-200 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer">
+            ⇄ Inverter A e B
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- POKÉMON A -->
+          <div class="bg-game-bg/80 border border-sky-700/40 rounded-2xl p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-sky-400">Pokémon A (Atual / Referência)</span>
+              <select id="cmp-load-A" onchange="loadTeamPokemonIntoCompare('A', this.value)" class="bg-game-card border border-game-border rounded-lg px-2 py-1 text-[11px] text-gray-200"></select>
+            </div>
+
+            <div class="space-y-1.5">
+              <textarea id="cmp-paste-A" rows="2" placeholder="Cole a ficha do Pokémon A aqui..." class="w-full bg-game-card border border-game-border rounded-xl p-2 text-xs text-gray-200"></textarea>
+              <button type="button" onclick="parseCompareSheet('A')" class="w-full bg-sky-800/80 hover:bg-sky-700 text-white text-xs font-bold py-1.5 rounded-lg cursor-pointer">
+                Extrair Ficha para Pokémon A
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] text-gray-400">Espécie (Auto Base Stats)</label>
+                <select id="cmp-species-A" onchange="applyPresetToCompare('A', this.value)" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Nome do Pokémon A</label>
+                <input type="text" id="cmp-name-A" value="Dragonite" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1.5 text-xs text-white font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-6 gap-1.5">
+              <div>
+                <label class="block text-[10px] text-gray-400">Nível</label>
+                <input type="number" id="cmp-level-A" value="648" min="1" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Potência</label>
+                <select id="cmp-pot-A" onchange="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1 py-1.5 text-xs text-white">
+                  <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="LEG">Lend. 4x</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Qualidade</label>
+                <input type="number" id="cmp-qual-A" value="1.796" step="0.001" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Refino (+)</label>
+                <input type="number" id="cmp-ref-A" value="0" min="0" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-purple-300">Nota N= (Opc)</label>
+                <input type="number" id="cmp-note-A" value="3.762" step="0.001" min="0" max="10" placeholder="Auto" oninput="renderComparison()" class="w-full bg-game-card border border-purple-500/40 rounded-lg px-1.5 py-1.5 text-xs text-purple-200 font-bold" />
+              </div>
+              <div class="flex flex-col justify-end pb-1">
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" id="cmp-shiny-A" onchange="renderComparison()" class="w-3.5 h-3.5 accent-amber-500" />
+                  <span class="text-[11px] font-bold text-amber-300">✨ Shiny</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer mt-0.5">
+                  <input type="checkbox" id="cmp-mega-A" onchange="renderComparison()" class="w-3.5 h-3.5 accent-purple-500" />
+                  <span class="text-[10px] text-purple-300">Mega</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 pt-1">
+              <div class="text-[10px] text-sky-300 font-semibold">IVs Individuais (HP / ATK / DEF / SPA / SPD / SPE)</div>
+              <div class="grid grid-cols-6 gap-1">
+                <input type="number" id="cmp-iv-hp-A" value="14" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-atk-A" value="24" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-def-A" value="21" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spa-A" value="26" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spd-A" value="29" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spe-A" value="32" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+              </div>
+              <div class="text-[10px] text-gray-400 font-semibold">Base Stats (HP / ATK / DEF / SPA / SPD / SPE)</div>
+              <div class="grid grid-cols-6 gap-1">
+                <input type="number" id="cmp-base-hp-A" value="91" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-atk-A" value="134" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-def-A" value="95" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spa-A" value="100" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spd-A" value="100" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spe-A" value="80" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- POKÉMON B -->
+          <div class="bg-game-bg/80 border border-amber-600/40 rounded-2xl p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Pokémon B (Desafiante / Simulado)</span>
+              <select id="cmp-load-B" onchange="loadTeamPokemonIntoCompare('B', this.value)" class="bg-game-card border border-game-border rounded-lg px-2 py-1 text-[11px] text-gray-200"></select>
+            </div>
+
+            <div class="space-y-1.5">
+              <textarea id="cmp-paste-B" rows="2" placeholder="Cole a ficha do Pokémon B aqui..." class="w-full bg-game-card border border-game-border rounded-xl p-2 text-xs text-gray-200"></textarea>
+              <button type="button" onclick="parseCompareSheet('B')" class="w-full bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-bold py-1.5 rounded-lg cursor-pointer">
+                Extrair Ficha para Pokémon B
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] text-gray-400">Espécie (Auto Base Stats)</label>
+                <select id="cmp-species-B" onchange="applyPresetToCompare('B', this.value)" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1.5 text-xs text-white"></select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Nome do Pokémon B</label>
+                <input type="text" id="cmp-name-B" value="Shiny Metagross" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1.5 text-xs text-white font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-6 gap-1.5">
+              <div>
+                <label class="block text-[10px] text-gray-400">Nível</label>
+                <input type="number" id="cmp-level-B" value="650" min="1" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Potência</label>
+                <select id="cmp-pot-B" onchange="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1 py-1.5 text-xs text-white">
+                  <option value="P1" selected>P1</option><option value="P2">P2</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="LEG">Lend. 4x</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Qualidade</label>
+                <input type="number" id="cmp-qual-B" value="1.650" step="0.001" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Refino (+)</label>
+                <input type="number" id="cmp-ref-B" value="5" min="0" oninput="renderComparison()" class="w-full bg-game-card border border-game-border rounded-lg px-1.5 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-purple-300">Nota N= (Opc)</label>
+                <input type="number" id="cmp-note-B" value="" step="0.001" min="0" max="10" placeholder="Auto" oninput="renderComparison()" class="w-full bg-game-card border border-purple-500/40 rounded-lg px-1.5 py-1.5 text-xs text-purple-200 font-bold" />
+              </div>
+              <div class="flex flex-col justify-end pb-1">
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" id="cmp-shiny-B" checked onchange="renderComparison()" class="w-3.5 h-3.5 accent-amber-500" />
+                  <span class="text-[11px] font-bold text-amber-300">✨ Shiny</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer mt-0.5">
+                  <input type="checkbox" id="cmp-mega-B" onchange="renderComparison()" class="w-3.5 h-3.5 accent-purple-500" />
+                  <span class="text-[10px] text-purple-300">Mega</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 pt-1">
+              <div class="text-[10px] text-amber-300 font-semibold">IVs Individuais (HP / ATK / DEF / SPA / SPD / SPE)</div>
+              <div class="grid grid-cols-6 gap-1">
+                <input type="number" id="cmp-iv-hp-B" value="24" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-atk-B" value="26" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-def-B" value="25" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spa-B" value="22" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spd-B" value="24" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+                <input type="number" id="cmp-iv-spe-B" value="23" min="0" max="32" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-white" />
+              </div>
+              <div class="text-[10px] text-gray-400 font-semibold">Base Stats (HP / ATK / DEF / SPA / SPD / SPE)</div>
+              <div class="grid grid-cols-6 gap-1">
+                <input type="number" id="cmp-base-hp-B" value="80" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-atk-B" value="135" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-def-B" value="130" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spa-B" value="95" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spd-B" value="90" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+                <input type="number" id="cmp-base-spe-B" value="70" min="1" oninput="renderComparison()" class="bg-game-card border border-game-border rounded py-1 text-xs text-center text-gray-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards de Métricas Oficiais da Wiki (Nota N=, Poder ⚔, HP Combate) -->
+        <div id="cmp-wiki-cards" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+        <!-- Tabela Comparativa Lado a Lado -->
+        <div class="mt-5 bg-game-bg/90 border border-game-border rounded-2xl p-4 overflow-x-auto">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-sm font-extrabold text-white">Comparativo de Atributos: Hunt (Nível Real) vs. PvP/Ginásio (Comprimido pós-150)</h3>
+            <span id="cmp-verdict-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-600/40"></span>
+          </div>
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-game-border text-gray-400">
+                <th class="py-2.5 px-2">Atributo / Métrica Wiki</th>
+                <th id="cmp-th-raw-A" class="py-2.5 px-2 text-right text-sky-300">Hunt A</th>
+                <th id="cmp-th-raw-B" class="py-2.5 px-2 text-right text-amber-300">Hunt B</th>
+                <th class="py-2.5 px-2 text-right">Dif. Hunt (B vs A)</th>
+                <th id="cmp-th-pvp-A" class="py-2.5 px-2 text-right text-sky-400 border-l border-game-border">PvP A</th>
+                <th id="cmp-th-pvp-B" class="py-2.5 px-2 text-right text-amber-400">PvP B</th>
+                <th class="py-2.5 px-2 text-right">Dif. PvP (B vs A)</th>
+              </tr>
+            </thead>
+            <tbody id="cmp-result-tbody" class="divide-y divide-game-border/50"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ABA 3: OUTLAND & CALCULADORA EXATA DE XP CÚBICO / TEMPO               -->
+    <!-- ===================================================================== -->
+    <section id="tab-outland" class="hidden space-y-6">
+      
+      <!-- Calculadora de Tempo para Próxima Outland com a Fórmula Cúbica Oficial -->
+      <div class="bg-gradient-to-r from-[#1e152c] to-[#191426] border border-purple-700/50 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3">
+          <div>
+            <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+              ⏱️ Calculadora Oficial de XP &amp; Tempo para Próxima Outland
+            </h2>
+            <p class="text-xs text-gray-400">Fórmula Cúbica Exata da Wiki: <code class="text-purple-300">xpTotal(L) = arred( 50/3 × (L³ − 6L² + 17L − 12) )</code></p>
+          </div>
+          <span id="xp-goal-account-tag" class="text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-xl">
+            Conta Principal
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Nível Atual do Treinador</label>
+            <input type="number" id="xp-cur-lvl" min="1" oninput="recalcOutlandXpProjection()" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-extrabold text-amber-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Outland Alvo (Meta)</label>
+            <select id="xp-target-outland" onchange="recalcOutlandXpProjection()" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white"></select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">XP / Hora Atual na Hunt</label>
+            <input type="number" id="xp-per-hour" min="1" oninput="recalcOutlandXpProjection()" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-extrabold text-purple-300" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Horas Jogadas / Dia</label>
+            <input type="number" id="xp-hours-per-day" min="1" max="24" value="24" oninput="recalcOutlandXpProjection()" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white" />
+          </div>
+          <div class="bg-game-bg/90 border border-emerald-500/40 rounded-xl px-3 py-2 flex flex-col justify-center">
+            <span class="text-[10px] text-emerald-300 font-semibold">XP Exato Faltante (Cúbica)</span>
+            <span id="xp-exact-needed-display" class="text-xs font-extrabold text-white mt-0.5">0 XP</span>
+            <span id="xp-next-lvl-cost" class="text-[10px] text-gray-400">Próx. nível: 0 XP</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <div class="bg-game-bg/90 border border-game-border rounded-xl p-3">
+            <div class="text-[11px] text-gray-400">Níveis Faltantes &amp; Salto de Drop</div>
+            <div id="xp-res-levels" class="text-lg font-extrabold text-white mt-0.5">+200 níveis</div>
+            <div id="xp-res-mult-gain" class="text-[11px] text-emerald-400 mt-0.5">Drop sobe +12,1%</div>
+          </div>
+          <div class="bg-game-bg/90 border border-game-border rounded-xl p-3">
+            <div class="text-[11px] text-gray-400">Horas Totais de Farm</div>
+            <div id="xp-res-hours" class="text-lg font-extrabold text-purple-300 mt-0.5">0,0 horas</div>
+            <div id="xp-res-total-str" class="text-[11px] text-gray-400 mt-0.5">Meta: 0 XP</div>
+          </div>
+          <div class="bg-game-bg/90 border border-amber-500/40 rounded-xl p-3">
+            <div class="text-[11px] text-amber-300">Tempo em Dias (24h/dia)</div>
+            <div id="xp-res-days-24" class="text-lg font-extrabold text-amber-400 mt-0.5">0,0 dias</div>
+            <div class="text-[11px] text-gray-400 mt-0.5">Farm contínuo 100% ativo</div>
+          </div>
+          <div class="bg-game-bg/90 border border-emerald-500/40 rounded-xl p-3">
+            <div id="xp-res-days-custom-lbl" class="text-[11px] text-emerald-300">Tempo Real (24h/dia)</div>
+            <div id="xp-res-days-custom" class="text-lg font-extrabold text-emerald-400 mt-0.5">0,0 dias</div>
+            <div id="xp-res-eta-date" class="text-[11px] text-gray-400 mt-0.5">Previsão: --/--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulador de Drops e Lucro Esperado -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-game-card border border-game-border rounded-2xl p-5 space-y-4">
+          <h3 class="text-base font-bold text-white border-b border-game-border pb-3">Simulador de Drops &amp; Lucro da Conta</h3>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Outland Simulada</label>
+              <select id="outland-selector" onchange="updateOutlandCalc(true)" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Bônus de Loot (%)</label>
+              <div class="flex gap-1.5">
+                <input type="number" id="outland-loot-bonus" min="0" max="500" oninput="updateOutlandCalc()" class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs font-bold text-emerald-400" />
+                <button type="button" onclick="toggleLootBoost40()" class="bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 text-xs px-2.5 rounded-xl font-bold cursor-pointer">+40%</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="outland-unlock-banner" class="bg-purple-950/40 border border-purple-700/50 rounded-xl p-3 space-y-1"></div>
+
+          <div class="pt-2 border-t border-game-border space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-300">Preços de Mercado (Bruto)</span>
+              <label class="inline-flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer">
+                <input type="checkbox" id="outland-apply-tax" checked onchange="updateOutlandCalc()" class="rounded accent-purple-500" />
+                Descontar taxa 15%
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-game-bg p-2.5 rounded-xl border border-game-border">
+                <div class="text-gray-400 text-[11px]">Bronze Boss Token</div>
+                <div class="flex gap-1.5 mt-1">
+                  <input type="number" id="price-token-gold" step="0.5" value="25.5" oninput="updateOutlandCalc()" class="w-1/2 bg-game-card border border-game-border rounded px-1.5 py-1 text-amber-300 font-semibold" />
+                  <input type="number" id="price-token-gems" step="0.5" value="5" oninput="updateOutlandCalc()" class="w-1/2 bg-game-card border border-game-border rounded px-1.5 py-1 text-sky-300 font-semibold" />
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-0.5"><span>Milhões (M)</span><span>Gemas</span></div>
+              </div>
+              <div class="bg-game-bg p-2.5 rounded-xl border border-game-border">
+                <div class="text-gray-400 text-[11px]">Média Frag. Raro</div>
+                <div class="flex gap-1.5 mt-1">
+                  <input type="number" id="price-frag-gold" step="10" value="650" oninput="updateOutlandCalc()" class="w-1/2 bg-game-card border border-game-border rounded px-1.5 py-1 text-amber-300 font-semibold" />
+                  <input type="number" id="price-frag-gems" step="5" value="140" oninput="updateOutlandCalc()" class="w-1/2 bg-game-card border border-game-border rounded px-1.5 py-1 text-sky-300 font-semibold" />
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 mt-0.5"><span>Milhões (M)</span><span>Gemas</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-game-card border border-game-border rounded-2xl p-5 space-y-4">
+          <div class="border-b border-game-border pb-3">
+            <h3 class="text-base font-bold text-white">Rendimento Esperado na Outland</h3>
+            <p id="outland-rate-subtitle" class="text-xs text-purple-300 mt-0.5"></p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-game-bg border border-game-border rounded-xl p-3">
+              <div class="text-xs text-gray-400">Rendimento / Hora</div>
+              <div id="outland-rev-hour-gold" class="text-lg font-extrabold text-amber-400 mt-1">0 M</div>
+              <div id="outland-rev-hour-gems" class="text-xs font-semibold text-sky-400 mt-0.5">0,00 Gemas/h</div>
+            </div>
+            <div class="bg-game-bg border border-purple-700/50 rounded-xl p-3">
+              <div class="text-xs text-purple-300 font-medium">Rendimento / Dia (24h)</div>
+              <div id="outland-rev-day-gold" class="text-xl font-extrabold text-amber-400 mt-1">0 M</div>
+              <div id="outland-rev-day-gems" class="text-xs font-semibold text-sky-400 mt-0.5">0,0 Gemas/dia</div>
+            </div>
+            <div class="bg-game-bg border border-emerald-700/50 rounded-xl p-3">
+              <div class="text-xs text-emerald-300 font-medium">Rendimento / Semana</div>
+              <div id="outland-rev-week-gold" class="text-xl font-extrabold text-emerald-400 mt-1">0,00 B</div>
+              <div id="outland-rev-week-gems" class="text-xs font-semibold text-sky-400 mt-0.5">0 Gemas/sem</div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="border-b border-game-border text-gray-400">
+                  <th class="py-2 px-2">Drop Raro</th>
+                  <th class="py-2 px-2 text-right">Chance</th>
+                  <th class="py-2 px-2 text-right">Média / Dia</th>
+                  <th class="py-2 px-2 text-right">Média / Semana</th>
+                  <th class="py-2 px-2 text-right">Tempo p/ 1 Drop</th>
+                </tr>
+              </thead>
+              <tbody id="outland-drops-tbody" class="divide-y divide-game-border/50"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela das 40 Outlands -->
+      <div class="bg-game-card border border-game-border rounded-2xl p-5">
+        <h3 class="text-base font-bold text-white mb-3">Tabela Oficial das 40 Outlands (Com XP Total Cúbico Acumulado)</h3>
+        <div class="overflow-x-auto max-h-80">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="sticky top-0 bg-[#181121] text-gray-300 border-b border-game-border">
+              <tr>
+                <th class="py-2 px-3">Outland</th>
+                <th class="py-2 px-3">Nível Requerido</th>
+                <th class="py-2 px-3">XP Total Cúbico</th>
+                <th class="py-2 px-3">Bônus</th>
+                <th class="py-2 px-3">Boss Token</th>
+                <th class="py-2 px-3">Cada Fragmento / Osso</th>
+                <th class="py-2 px-3 text-right">Status na Conta</th>
+              </tr>
+            </thead>
+            <tbody id="all-outlands-tbody" class="divide-y divide-game-border/40"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ABA 4: INVENTÁRIO, ROI BOSSES & AUTO-SNIPER + HISTÓRICO DIÁRIO        -->
+    <!-- ===================================================================== -->
+    <section id="tab-history" class="hidden space-y-6">
+      
+      <!-- Barras de Progresso 10/10 -->
+      <div id="inventory-progress-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+      <!-- Rastreador de ROI dos Bosses & Auto-Sniper -->
+      <div class="bg-gradient-to-r from-[#1d1428] to-[#171222] border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              🎯 Rastreador de ROI dos Bosses &amp; Calculadora do Auto-Sniper
+            </h3>
+            <p class="text-xs text-gray-400">Calcula o Valor Esperado (EV) por token e acompanha suas baterias de Boss Tokens.</p>
+          </div>
+          <span id="boss-ev-badge" class="text-xs font-extrabold px-3 py-1 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-500/40"></span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-5 bg-game-bg/80 border border-game-border rounded-xl p-3.5 space-y-2.5">
+            <div class="text-xs font-bold text-amber-300">Cotações de Referência (1% AoE + 1% Z-Move)</div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <label class="block text-[10px] text-gray-400">AoE TM Piece (Gemas)</label>
+                <input type="number" id="ev-aoe-gems" value="396" oninput="renderBossRoiSection()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-emerald-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">AoE TM Piece (Ouro M)</label>
+                <input type="number" id="ev-aoe-gold" value="2000" oninput="renderBossRoiSection()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-amber-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Frag. Z-Move (Gemas)</label>
+                <input type="number" id="ev-zmove-gems" value="153" oninput="renderBossRoiSection()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-purple-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-400">Frag. Z-Move (Ouro M)</label>
+                <input type="number" id="ev-zmove-gold" value="700" oninput="renderBossRoiSection()" class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-amber-300 font-bold" />
+              </div>
+            </div>
+            <div id="sniper-recommendation-box" class="text-[11px] bg-purple-950/40 border border-purple-700/40 rounded-lg p-2.5 text-gray-200 space-y-1"></div>
+          </div>
+
+          <div class="lg:col-span-7 flex flex-col justify-between space-y-3">
+            <div id="boss-cumulative-kpis" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+
+            <form onsubmit="addBossRunEntry(event)" class="bg-game-bg/80 border border-game-border rounded-xl p-3 space-y-2">
+              <div class="text-xs font-bold text-white">Registrar Nova Bateria de Bosses</div>
+              <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
+                <div>
+                  <label class="block text-[10px] text-gray-400">Data</label>
+                  <input type="date" id="boss-run-date" required class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-white" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-gray-400">Tokens Gastos</label>
+                  <input type="number" id="boss-run-tokens" min="1" value="100" required class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-white font-bold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-gray-400">Custo Médio (g/un)</label>
+                  <input type="number" id="boss-run-cost-gems" step="0.1" min="0" value="4.5" required class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-sky-300 font-bold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-emerald-300 font-semibold">AoE Ganhos</label>
+                  <input type="number" id="boss-run-aoe" min="0" value="1" required class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-emerald-400 font-bold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-purple-300 font-semibold">Z-Moves Ganhos</label>
+                  <input type="number" id="boss-run-zmove" min="0" value="1" required class="w-full bg-game-card border border-game-border rounded-lg px-2 py-1 text-purple-300 font-bold" />
+                </div>
+                <div class="flex items-end">
+                  <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 px-2 rounded-lg transition cursor-pointer">
+                    + Salvar Run
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div class="overflow-x-auto max-h-36 bg-game-bg/60 rounded-xl border border-game-border">
+              <table class="w-full text-[11px] text-left border-collapse">
+                <thead class="bg-[#181121] text-gray-400 border-b border-game-border">
+                  <tr>
+                    <th class="py-1.5 px-2">Data</th>
+                    <th class="py-1.5 px-2">Tokens</th>
+                    <th class="py-1.5 px-2">Custo Total</th>
+                    <th class="py-1.5 px-2">Drops (AoE / Z)</th>
+                    <th class="py-1.5 px-2 text-right">Lucro Líquido</th>
+                    <th class="py-1.5 px-2 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody id="boss-runs-tbody" class="divide-y divide-game-border/40"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulário de Snapshot Diário + Gráfico Chart.js -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-5 bg-game-card border border-game-border rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-game-border pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white">Registrar Snapshot por Data</h3>
+              <p class="text-xs text-gray-400">Salva inventário, saldos <strong class="text-emerald-300">e todos os Pokémon atuais</strong> da conta.</p>
+            </div>
+            <button type="button" onclick="syncAccountStateIntoHistoryForm()" class="text-xs text-purple-300 hover:underline cursor-pointer">
+              Puxar dados atuais
+            </button>
+          </div>
+
+          <form id="history-form" onsubmit="saveHistoryEntry(event)" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Data</label>
+                <input type="date" id="hist-date" required class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Nível Treinador</label>
+                <input type="number" id="hist-trainer-lvl" min="1" required class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs text-amber-400 font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 bg-game-bg/70 p-3 rounded-xl border border-game-border">
+              <div>
+                <label class="block text-[11px] text-amber-300 font-semibold mb-1">Ouro (Milhões / M)</label>
+                <input type="number" id="hist-gold" step="0.1" min="0" required class="w-full bg-game-card border border-game-border rounded-lg px-2.5 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-sky-300 font-semibold mb-1">Gemas</label>
+                <input type="number" id="hist-gems" step="1" min="0" required class="w-full bg-game-card border border-game-border rounded-lg px-2.5 py-1.5 text-xs text-white" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[10px] text-emerald-300 font-bold mb-1">AoE TM (/10)</label>
+                <input type="number" id="hist-aoe" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-purple-300 font-bold mb-1">Frag. Z-Move</label>
+                <input type="number" id="hist-zmove" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-amber-300 font-bold mb-1">Boss Tokens</label>
+                <input type="number" id="hist-tokens" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Frag. Bike (/10)</label>
+                <input type="number" id="hist-bike" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Frag. Chave (/10)</label>
+                <input type="number" id="hist-key" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Frag. Shiny St.</label>
+                <input type="number" id="hist-shinystone" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Osso Sacrifício</label>
+                <input type="number" id="hist-bone" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Frag. MEGA</label>
+                <input type="number" id="hist-mega" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-gray-300 mb-1">Pedras Refino</label>
+                <input type="number" id="hist-refine" min="0" required class="w-full bg-game-bg border border-game-border rounded-lg px-2 py-1.5 text-xs text-white" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Observações do Dia</label>
+              <input type="text" id="hist-notes" placeholder="Ex: Upei Tyranitar +20 níveis, dropei 1 bike..." class="w-full bg-game-bg border border-game-border rounded-xl px-3 py-2 text-xs text-white" />
+            </div>
+
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow transition cursor-pointer">
+              Salvar Registro Completo (Inventário + Equipe)
+            </button>
+          </form>
+        </div>
+
+        <!-- Gráfico de Evolução -->
+        <div class="lg:col-span-7 bg-game-card border border-game-border rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-game-border pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white">Evolução Histórica da Conta</h3>
+              <p class="text-xs text-gray-400">Acompanhe o crescimento do Poder PvP, Poder Ranking ⚔, Gemas, Ouro ou TM AoE.</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="setChartMetric('pvpPower')" data-metric="pvpPower" class="chart-metric-btn bg-emerald-900/70 border border-emerald-500 text-emerald-200 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer">Poder PvP</button>
+              <button type="button" onclick="setChartMetric('rankingPower')" data-metric="rankingPower" class="chart-metric-btn bg-game-bg border border-game-border text-gray-400 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer">Poder ⚔</button>
+              <button type="button" onclick="setChartMetric('gems')" data-metric="gems" class="chart-metric-btn bg-game-bg border border-game-border text-gray-400 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer">Gemas</button>
+              <button type="button" onclick="setChartMetric('gold')" data-metric="gold" class="chart-metric-btn bg-game-bg border border-game-border text-gray-400 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer">Ouro (M)</button>
+              <button type="button" onclick="setChartMetric('aoe')" data-metric="aoe" class="chart-metric-btn bg-game-bg border border-game-border text-gray-400 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer">TM AoE</button>
+            </div>
+          </div>
+
+          <div class="relative w-full h-64 bg-game-bg/60 rounded-xl border border-game-border p-3">
+            <canvas id="history-chart"></canvas>
+          </div>
+
+          <div id="history-summary-footer" class="grid grid-cols-3 gap-3 text-center text-xs"></div>
+        </div>
+      </div>
+
+      <!-- Tabela Histórica Completa -->
+      <div class="bg-game-card border border-game-border rounded-2xl p-5">
+        <h3 class="text-base font-bold text-white mb-3">Histórico Diário (Com Evolução de Poder PvP, Poder ⚔ &amp; Retrato do Time)</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-game-border text-gray-400">
+                <th class="py-2.5 px-2">Data</th>
+                <th class="py-2.5 px-2">Treinador</th>
+                <th class="py-2.5 px-2">Poder PvP Time</th>
+                <th class="py-2.5 px-2">Poder ⚔ Total</th>
+                <th class="py-2.5 px-2">Ouro</th>
+                <th class="py-2.5 px-2">Gemas</th>
+                <th class="py-2.5 px-2">TM AoE</th>
+                <th class="py-2.5 px-2">Z / Tokens</th>
+                <th class="py-2.5 px-2">Notas</th>
+                <th class="py-2.5 px-2 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-tbody" class="divide-y divide-game-border/50"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. DADOS ESTÁTICOS (40 OUTLANDS, MATRIZ DE 18 TIPOS & PRESETS)
+    // =========================================================================
+    const ALL_TYPES = [
+      "NORMAL", "FIRE", "WATER", "ELECTRIC", "GRASS", "ICE",
+      "FIGHTING", "POISON", "GROUND", "FLYING", "PSYCHIC", "BUG",
+      "ROCK", "GHOST", "DRAGON", "DARK", "STEEL", "FAIRY"
+    ];
+
+    const TYPE_LABELS_PT = {
+      NORMAL: "Normal", FIRE: "Fogo", WATER: "Água", ELECTRIC: "Elétrico",
+      GRASS: "Grama", ICE: "Gelo", FIGHTING: "Lutador", POISON: "Veneno",
+      GROUND: "Terra", FLYING: "Voador", PSYCHIC: "Psíquico", BUG: "Inseto",
+      ROCK: "Pedra", GHOST: "Fantasma", DRAGON: "Dragão", DARK: "Sombrio",
+      STEEL: "Metálico", FAIRY: "Fada"
+    };
+
+    const TYPE_CHART = {
+      NORMAL:   { FIGHTING: 2, GHOST: 0 },
+      FIRE:     { FIRE: 0.5, WATER: 2, GRASS: 0.5, ICE: 0.5, GROUND: 2, BUG: 0.5, ROCK: 2, STEEL: 0.5, FAIRY: 0.5 },
+      WATER:    { FIRE: 0.5, WATER: 0.5, ELECTRIC: 2, GRASS: 2, ICE: 0.5, STEEL: 0.5 },
+      ELECTRIC: { ELECTRIC: 0.5, GROUND: 2, FLYING: 0.5, STEEL: 0.5 },
+      GRASS:    { FIRE: 2, WATER: 0.5, ELECTRIC: 0.5, GRASS: 0.5, ICE: 2, POISON: 2, GROUND: 0.5, FLYING: 2, BUG: 2 },
+      ICE:      { FIRE: 2, ICE: 0.5, FIGHTING: 2, ROCK: 2, STEEL: 2 },
+      FIGHTING: { FLYING: 2, PSYCHIC: 2, BUG: 0.5, ROCK: 0.5, DARK: 0.5, FAIRY: 2 },
+      POISON:   { GRASS: 0.5, FIGHTING: 0.5, POISON: 0.5, GROUND: 2, PSYCHIC: 2, BUG: 0.5, FAIRY: 0.5 },
+      GROUND:   { WATER: 2, ELECTRIC: 0, GRASS: 2, ICE: 2, POISON: 0.5, ROCK: 0.5 },
+      FLYING:   { ELECTRIC: 2, GRASS: 0.5, ICE: 2, FIGHTING: 0.5, GROUND: 0, BUG: 0.5, ROCK: 2 },
+      PSYCHIC:  { FIGHTING: 0.5, PSYCHIC: 0.5, BUG: 2, GHOST: 2, DARK: 2 },
+      BUG:      { FIRE: 2, GRASS: 0.5, FIGHTING: 0.5, GROUND: 0.5, FLYING: 2, ROCK: 2 },
+      ROCK:     { NORMAL: 0.5, FIRE: 0.5, WATER: 2, GRASS: 2, FIGHTING: 2, POISON: 0.5, GROUND: 2, FLYING: 0.5, STEEL: 2 },
+      GHOST:    { NORMAL: 0, FIGHTING: 0, POISON: 0.5, BUG: 0.5, GHOST: 2, DARK: 2 },
+      DRAGON:   { FIRE: 0.5, WATER: 0.5, ELECTRIC: 0.5, GRASS: 0.5, ICE: 2, DRAGON: 2, FAIRY: 2 },
+      DARK:     { FIGHTING: 2, PSYCHIC: 0, BUG: 2, GHOST: 0.5, DARK: 0.5, FAIRY: 2 },
+      STEEL:    { NORMAL: 0.5, FIRE: 2, GRASS: 0.5, ICE: 0.5, FIGHTING: 2, POISON: 0, GROUND: 2, FLYING: 0.5, PSYCHIC: 0.5, BUG: 0.5, ROCK: 0.5, DRAGON: 0.5, STEEL: 0.5, FAIRY: 0.5 },
+      FAIRY:    { FIGHTING: 0.5, POISON: 2, BUG: 0.5, DRAGON: 0, DARK: 0.5, STEEL: 2 }
+    };
+
+    const OUTLANDS_DATA = [
+      { id: 1, level: 150, mult: 1.0 }, { id: 2, level: 500, mult: 1.1 },
+      { id: 3, level: 750, mult: 1.15 }, { id: 4, level: 1000, mult: 1.25 },
+      { id: 5, level: 1250, mult: 1.3 }, { id: 6, level: 1500, mult: 1.5 },
+      { id: 7, level: 1800, mult: 1.65 }, { id: 8, level: 2000, mult: 1.85 },
+      { id: 9, level: 2250, mult: 2.0 }, { id: 10, level: 2500, mult: 2.15 },
+      { id: 11, level: 3000, mult: 2.3 }, { id: 12, level: 3250, mult: 2.45 },
+      { id: 13, level: 3500, mult: 2.6 }, { id: 14, level: 4000, mult: 2.75 },
+      { id: 15, level: 5000, mult: 3.0 }, { id: 16, level: 6000, mult: 3.25 },
+      { id: 17, level: 7000, mult: 3.5 }, { id: 18, level: 8000, mult: 3.75 },
+      { id: 19, level: 10000, mult: 4.0 }, { id: 20, level: 11000, mult: 4.25 },
+      { id: 21, level: 12000, mult: 4.5 }, { id: 22, level: 14000, mult: 5.0 },
+      { id: 23, level: 15000, mult: 5.25 }, { id: 24, level: 17000, mult: 6.0 },
+      { id: 25, level: 19000, mult: 6.5 }, { id: 26, level: 21000, mult: 7.0 },
+      { id: 27, level: 24000, mult: 7.5 }, { id: 28, level: 28000, mult: 8.0 },
+      { id: 29, level: 32000, mult: 8.5 }, { id: 30, level: 36000, mult: 9.0 },
+      { id: 31, level: 38000, mult: 9.5 }, { id: 32, level: 40000, mult: 10.0 },
+      { id: 33, level: 41000, mult: 10.5 }, { id: 34, level: 43000, mult: 11.0 },
+      { id: 35, level: 45000, mult: 12.0 }, { id: 36, level: 48000, mult: 13.0 },
+      { id: 37, level: 52000, mult: 14.0 }, { id: 38, level: 58000, mult: 16.0 },
+      { id: 39, level: 60000, mult: 17.0 }, { id: 40, level: 65000, mult: 20.0 }
+    ];
+
+    const SPECIES_PRESETS = {
+      "Tyranitar": { type1: "ROCK", type2: "DARK", base: { hp: 100, atk: 134, def: 110, spa: 95, spd: 100, spe: 61 } },
+      "Dragonite": { type1: "DRAGON", type2: "FLYING", base: { hp: 91, atk: 134, def: 95, spa: 100, spd: 100, spe: 80 } },
+      "Furious Scizor": { type1: "BUG", type2: "STEEL", base: { hp: 70, atk: 130, def: 100, spa: 55, spd: 80, spe: 65 } },
+      "Scizor": { type1: "BUG", type2: "STEEL", base: { hp: 70, atk: 130, def: 100, spa: 55, spd: 80, spe: 65 } },
+      "Milotic": { type1: "WATER", type2: "NONE", base: { hp: 95, atk: 60, def: 79, spa: 100, spd: 125, spe: 81 } },
+      "Exeggutor": { type1: "GRASS", type2: "PSYCHIC", base: { hp: 95, atk: 95, def: 85, spa: 125, spd: 75, spe: 55 } },
+      "Metagross": { type1: "STEEL", type2: "PSYCHIC", base: { hp: 80, atk: 135, def: 130, spa: 95, spd: 90, spe: 70 } },
+      "Garchomp": { type1: "DRAGON", type2: "GROUND", base: { hp: 108, atk: 130, def: 95, spa: 80, spd: 85, spe: 102 } },
+      "Gardevoir": { type1: "PSYCHIC", type2: "FAIRY", base: { hp: 68, atk: 65, def: 65, spa: 125, spd: 115, spe: 80 } },
+      "Gyarados": { type1: "WATER", type2: "FLYING", base: { hp: 95, atk: 125, def: 79, spa: 60, spd: 100, spe: 81 } },
+      "Charizard": { type1: "FIRE", type2: "FLYING", base: { hp: 78, atk: 84, def: 78, spa: 109, spd: 85, spe: 100 } },
+      "Sceptile": { type1: "GRASS", type2: "NONE", base: { hp: 70, atk: 85, def: 65, spa: 105, spd: 85, spe: 120 } },
+      "Abomasnow": { type1: "GRASS", type2: "ICE", base: { hp: 90, atk: 92, def: 75, spa: 92, spd: 85, spe: 60 } },
+      "Gengar": { type1: "GHOST", type2: "POISON", base: { hp: 60, atk: 65, def: 60, spa: 130, spd: 75, spe: 110 } },
+      "Swampert": { type1: "WATER", type2: "GROUND", base: { hp: 100, atk: 110, def: 90, spa: 85, spd: 90, spe: 60 } },
+      "Lucario": { type1: "FIGHTING", type2: "STEEL", base: { hp: 70, atk: 110, def: 70, spa: 115, spd: 70, spe: 90 } },
+      "Mamoswine": { type1: "ICE", type2: "GROUND", base: { hp: 110, atk: 130, def: 80, spa: 70, spd: 60, spe: 80 } },
+      "Glaceon": { type1: "ICE", type2: "NONE", base: { hp: 65, atk: 60, def: 110, spa: 130, spd: 95, spe: 65 } },
+      "Blastoise": { type1: "WATER", type2: "NONE", base: { hp: 79, atk: 83, def: 100, spa: 85, spd: 105, spe: 78 } },
+      "Venusaur": { type1: "GRASS", type2: "POISON", base: { hp: 80, atk: 82, def: 83, spa: 100, spd: 100, spe: 80 } },
+      "Personalizado": { type1: "NORMAL", type2: "NONE", base: { hp: 80, atk: 80, def: 80, spa: 80, spd: 80, spe: 80 } }
+    };
+
+    const POTENCY_MULT = { P1: 1.0, P2: 1.05, P3: 1.10, P4: 1.25, P5: 2.00, LEG: 4.00 };
+    const STORAGE_KEY = 'pokeidle_manager_wiki_v3';
+
+    function getTodayISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // =========================================================================
+    // 2. ESTADO INICIAL COM AS 4 CONTAS CALIBRADAS
+    // =========================================================================
+    const DEFAULT_STATE = {
+      activeAccountId: 'main',
+      prices: { tokenGold: 25.5, tokenGems: 5, fragGold: 650, fragGems: 140 },
+      evRefs: { aoeGems: 396, aoeGold: 2000, zmoveGems: 153, zmoveGold: 700 },
+      applyTax: true,
+      accounts: [
+        {
+          id: 'main',
+          name: 'Conta Principal',
+          trainerLevel: 1800,
+          gold: 1650,
+          gems: 314,
+          killsPerHour: 1500,
+          xpPerHour: 35284121,
+          lootBonus: 0,
+          xpBonus: 90.6,
+          selectedOutland: 7,
+          team: [
+            {
+              name: "Tyranitar", species: "Tyranitar", type1: "ROCK", type2: "DARK",
+              level: 1596, potency: "P1", quality: 1.754, refine: 3, shiny: false, note: 3.532,
+              rankingPower: 6377, pvpPower: 66837,
+              ivs: { hp: 20, atk: 24, def: 22, spa: 18, spd: 22, spe: 20 },
+              base: { hp: 100, atk: 134, def: 110, spa: 95, spd: 100, spe: 61 }
+            },
+            {
+              name: "Furious Scizor", species: "Furious Scizor", type1: "BUG", type2: "STEEL",
+              level: 543, potency: "P5", quality: 1.277, refine: 0, shiny: false, note: 4.833,
+              rankingPower: 2650, pvpPower: 21603,
+              ivs: { hp: 20, atk: 22, def: 20, spa: 16, spd: 20, spe: 20 },
+              base: { hp: 70, atk: 130, def: 100, spa: 55, spd: 80, spe: 65 }
+            },
+            {
+              name: "Exeggutor", species: "Exeggutor", type1: "GRASS", type2: "PSYCHIC",
+              level: 634, potency: "P1", quality: 1.800, refine: 0, shiny: false, note: 3.867,
+              rankingPower: 2568, pvpPower: 12499,
+              ivs: { hp: 26, atk: 26, def: 24, spa: 30, spd: 26, spe: 28 },
+              base: { hp: 95, atk: 95, def: 85, spa: 125, spd: 75, spe: 55 }
+            },
+            {
+              name: "Dragonite", species: "Dragonite", type1: "DRAGON", type2: "FLYING",
+              level: 648, potency: "P1", quality: 1.796, refine: 0, shiny: false, note: 3.762,
+              rankingPower: 2722, pvpPower: 9964,
+              ivs: { hp: 14, atk: 24, def: 21, spa: 26, spd: 29, spe: 32 },
+              base: { hp: 91, atk: 134, def: 95, spa: 100, spd: 100, spe: 80 }
+            },
+            {
+              name: "Milotic", species: "Milotic", type1: "WATER", type2: "NONE",
+              level: 417, potency: "P2", quality: 1.800, refine: 0, shiny: false, note: 3.826,
+              rankingPower: 1685, pvpPower: 3972,
+              ivs: { hp: 22, atk: 18, def: 22, spa: 24, spd: 25, spe: 22 },
+              base: { hp: 95, atk: 60, def: 79, spa: 100, spd: 125, spe: 81 }
+            }
+          ],
+          bossRuns: [
+            { id: 1, date: "2026-11-21", tokens: 100, costPerTokenGems: 3.5, aoe: 2, zmove: 3 }
+          ],
+          history: [
+            {
+              date: "2026-11-19",
+              trainerLevel: 1691,
+              gold: 1850,
+              gems: 251,
+              aoe: 0,
+              zmove: 0,
+              tokens: 5,
+              bike: 0,
+              key: 1,
+              shinystone: 1,
+              bone: 0,
+              mega: 0,
+              refine: 12,
+              pvpPower: 108400,
+              rankingPower: 15100,
+              notes: "Vendi 2 bikes por 146g cada (251g em caixa)",
+              teamSnapshot: [
+                { name: "Tyranitar", level: 1557, potency: "P1", shiny: false, refine: 3, rankingPower: 6220, pvpPower: 63200 },
+                { name: "Furious Scizor", level: 525, potency: "P5", shiny: false, refine: 0, rankingPower: 2560, pvpPower: 20400 },
+                { name: "Exeggutor", level: 403, potency: "P1", shiny: false, refine: 0, rankingPower: 1630, pvpPower: 11200 },
+                { name: "Dragonite", level: 612, potency: "P1", shiny: false, refine: 0, rankingPower: 2570, pvpPower: 9800 },
+                { name: "Milotic", level: 363, potency: "P2", shiny: false, refine: 0, rankingPower: 1470, pvpPower: 3800 }
+              ]
+            },
+            {
+              date: getTodayISO(),
+              trainerLevel: 1800,
+              gold: 1650,
+              gems: 314,
+              aoe: 2,
+              zmove: 0,
+              tokens: 19,
+              bike: 0,
+              key: 1,
+              shinystone: 2,
+              bone: 1,
+              mega: 1,
+              refine: 18,
+              pvpPower: 114875,
+              rankingPower: 16002,
+              notes: "Bati Nv 1.800 (Outland 7) + 2 AoE TM Pieces acumulados",
+              teamSnapshot: [
+                { name: "Tyranitar", level: 1596, potency: "P1", shiny: false, refine: 3, rankingPower: 6377, pvpPower: 66837 },
+                { name: "Furious Scizor", level: 543, potency: "P5", shiny: false, refine: 0, rankingPower: 2650, pvpPower: 21603 },
+                { name: "Exeggutor", level: 634, potency: "P1", shiny: false, refine: 0, rankingPower: 2568, pvpPower: 12499 },
+                { name: "Dragonite", level: 648, potency: "P1", shiny: false, refine: 0, rankingPower: 2722, pvpPower: 9964 },
+                { name: "Milotic", level: 417, potency: "P2", shiny: false, refine: 0, rankingPower: 1685, pvpPower: 3972 }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'alt1',
+          name: 'Secundária 1 (Alt 1)',
+          trainerLevel: 900,
+          gold: 250,
+          gems: 15,
+          killsPerHour: 1100,
+          xpPerHour: 12000000,
+          lootBonus: 0,
+          xpBonus: 0,
+          selectedOutland: 3,
+          team: [
+            {
+              name: "Carry Alt 1", species: "Tyranitar", type1: "ROCK", type2: "DARK",
+              level: 850, potency: "P2", quality: 1.500, refine: 0, shiny: false, note: 3.400, rankingPower: 2890, pvpPower: 22000,
+              ivs: { hp: 20, atk: 20, def: 20, spa: 20, spd: 20, spe: 20 },
+              base: { hp: 100, atk: 134, def: 110, spa: 95, spd: 100, spe: 61 }
+            }
+          ],
+          bossRuns: [],
+          history: [
+            {
+              date: getTodayISO(), trainerLevel: 900, gold: 250, gems: 15, aoe: 0, zmove: 0, tokens: 3,
+              bike: 0, key: 0, shinystone: 0, bone: 0, mega: 0, refine: 2, pvpPower: 22000, rankingPower: 2890,
+              notes: "Nv 900 — faltam 100 níveis para Outland 4",
+              teamSnapshot: [{ name: "Carry Alt 1", level: 850, potency: "P2", shiny: false, refine: 0, rankingPower: 2890, pvpPower: 22000 }]
+            }
+          ]
+        },
+        {
+          id: 'alt2',
+          name: 'Secundária 2 (Alt 2)',
+          trainerLevel: 900,
+          gold: 220,
+          gems: 10,
+          killsPerHour: 1100,
+          xpPerHour: 12000000,
+          lootBonus: 0,
+          xpBonus: 0,
+          selectedOutland: 3,
+          team: [
+            {
+              name: "Carry Alt 2", species: "Garchomp", type1: "DRAGON", type2: "GROUND",
+              level: 840, potency: "P2", quality: 1.480, refine: 0, shiny: false, note: 3.380, rankingPower: 2839, pvpPower: 21500,
+              ivs: { hp: 20, atk: 20, def: 20, spa: 20, spd: 20, spe: 20 },
+              base: { hp: 108, atk: 130, def: 95, spa: 80, spd: 85, spe: 102 }
+            }
+          ],
+          bossRuns: [],
+          history: [
+            {
+              date: getTodayISO(), trainerLevel: 900, gold: 220, gems: 10, aoe: 0, zmove: 0, tokens: 2,
+              bike: 0, key: 0, shinystone: 0, bone: 0, mega: 0, refine: 1, pvpPower: 21500, rankingPower: 2839,
+              notes: "Nv 900 — farmando Outland 3 / XP",
+              teamSnapshot: [{ name: "Carry Alt 2", level: 840, potency: "P2", shiny: false, refine: 0, rankingPower: 2839, pvpPower: 21500 }]
+            }
+          ]
+        },
+        {
+          id: 'alt3',
+          name: 'Secundária 3 (Alt 3)',
+          trainerLevel: 900,
+          gold: 210,
+          gems: 12,
+          killsPerHour: 1100,
+          xpPerHour: 12000000,
+          lootBonus: 0,
+          xpBonus: 0,
+          selectedOutland: 3,
+          team: [
+            {
+              name: "Carry Alt 3", species: "Metagross", type1: "STEEL", type2: "PSYCHIC",
+              level: 845, potency: "P2", quality: 1.510, refine: 0, shiny: false, note: 3.410, rankingPower: 2881, pvpPower: 21800,
+              ivs: { hp: 20, atk: 20, def: 20, spa: 20, spd: 20, spe: 20 },
+              base: { hp: 80, atk: 135, def: 130, spa: 95, spd: 90, spe: 70 }
+            }
+          ],
+          bossRuns: [],
+          history: [
+            {
+              date: getTodayISO(), trainerLevel: 900, gold: 210, gems: 12, aoe: 0, zmove: 0, tokens: 4,
+              bike: 0, key: 0, shinystone: 0, bone: 0, mega: 0, refine: 2, pvpPower: 21800, rankingPower: 2881,
+              notes: "Nv 900 — farmando Outland 3 / XP",
+              teamSnapshot: [{ name: "Carry Alt 3", level: 845, potency: "P2", shiny: false, refine: 0, rankingPower: 2881, pvpPower: 21800 }]
+            }
+          ]
+        }
+      ]
+    };
+
+    let appState = loadState();
+    let historyChartInstance = null;
+    let currentChartMetric = 'pvpPower';
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.accounts) || parsed.accounts.length === 0) {
+          return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+        return parsed;
+      } catch (e) {
+        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      }
+    }
+
+    function getActiveAccount() {
+      return appState.accounts.find(a => a.id === appState.activeAccountId) || appState.accounts[0];
+    }
+
+    function saveState(silent = false) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      renderAccountSwitcher();
+      if (!silent) showToast("Dados salvos com sucesso!");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      toast.classList.remove('hidden');
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.classList.add('hidden'), 300);
+      }, 2400);
+    }
+
+    function formatGoldM(millions) {
+      if (millions >= 1000) return `${(millions / 1000).toFixed(2).replace('.', ',')} B`;
+      return `${Number(millions).toFixed(1).replace('.', ',')} M`;
+    }
+
+    function formatLargeXp(xp) {
+      if (xp >= 1e12) return `${(xp / 1e12).toFixed(3).replace('.', ',')} Trilhões`;
+      if (xp >= 1e9) return `${(xp / 1e9).toFixed(3).replace('.', ',')} Bilhões`;
+      if (xp >= 1e6) return `${(xp / 1e6).toFixed(2).replace('.', ',')} Milhões`;
+      return Math.round(xp).toLocaleString('pt-BR');
+    }
+
+    // =========================================================================
+    // 3. FÓRMULAS OFICIAIS DA WIKI DO POKEIDLE (VERBATIM)
+    // =========================================================================
+
+    // 1) Curva Cúbica Exata de XP do Treinador
+    function xpTotal(L) {
+      if (L <= 1) return 0;
+      return Math.round((50 / 3) * (Math.pow(L, 3) - 6 * Math.pow(L, 2) + 17 * L - 12));
+    }
+
+    function xpDoNivel(L) {
+      if (L <= 1) return 0;
+      return xpTotal(L) - xpTotal(L - 1);
+    }
+
+    function xpNecessario(L_atual, L_alvo) {
+      return Math.max(0, xpTotal(L_alvo) - xpTotal(L_atual));
+    }
+
+    // 2) Compressão de Nível no PvP / Ginásio ("conta como Nv X")
+    function nivelComprimido(L) {
+      return L <= 150 ? L : 150 * Math.pow(L / 150, 0.45);
+    }
+
+    // 3) Faixas de Cor e Rótulo da Nota N= (0–10 e GLITCH Lendário)
+    function getNoteTier(noteVal, isLegendary = false) {
+      if (isLegendary) {
+        return {
+          label: "GLITCH • INESTIMÁVEL (4×)",
+          badgeClass: "bg-fuchsia-950 text-fuchsia-200 border-fuchsia-400 note-glow",
+          borderClass: "border-fuchsia-500/70"
+        };
+      }
+      const n = Math.max(0, Math.min(10, Number(noteVal) || 0));
+      if (n < 1) return { label: "Extremamente Fraco", badgeClass: "bg-gray-800 text-gray-300 border-gray-500", borderClass: "border-gray-600/50" };
+      if (n < 2) return { label: "Fraco", badgeClass: "bg-red-950 text-red-300 border-red-500", borderClass: "border-red-600/50" };
+      if (n < 3) return { label: "Mediano", badgeClass: "bg-orange-950 text-orange-300 border-orange-500", borderClass: "border-orange-500/50" };
+      if (n < 4) return { label: "Razoável", badgeClass: "bg-green-950 text-green-300 border-green-600", borderClass: "border-green-600/50" };
+      if (n < 5) return { label: "Bom", badgeClass: "bg-emerald-950 text-emerald-300 border-emerald-500", borderClass: "border-emerald-500/50" };
+      if (n < 6) return { label: "Forte", badgeClass: "bg-emerald-900/90 text-emerald-200 border-emerald-400 note-glow", borderClass: "border-emerald-400/60" };
+      if (n < 7) return { label: "Poderoso", badgeClass: "bg-violet-950 text-violet-200 border-violet-400 note-glow", borderClass: "border-violet-400/60" };
+      if (n < 8) return { label: "Mítico", badgeClass: "bg-purple-950 text-purple-200 border-purple-400 note-glow", borderClass: "border-purple-400/70" };
+      if (n < 9) return { label: "Lendário", badgeClass: "bg-pink-950 text-pink-200 border-pink-400 note-glow", borderClass: "border-pink-400/70" };
+      return { label: "Divino", badgeClass: "bg-rose-950 text-rose-200 border-rose-400 note-glow", borderClass: "border-rose-400/80" };
+    }
+
+    // 4) Score de Nascimento (0–1), Poder Ranking ⚔ e Poder PvP ⚔
+    // Na Wiki: nota = 10 * (score - pior) / (melhor - pior) e poder = arred(nivel * 10 * score)
+    function computeBirthScoreAndNote(cfg) {
+      const ivs = cfg.ivs || { hp: 16, atk: 16, def: 16, spa: 16, spd: 16, spe: 16 };
+      const ivSum = Object.values(ivs).reduce((a, b) => a + (Number(b) || 0), 0);
+      const ivNorm = Math.min(1, Math.max(0, ivSum / 186));
+      const q = Number(cfg.quality) || 1.0;
+      const qNorm = Math.min(1, Math.max(0, (q - 0.8) / 1.0));
+      const multPot = POTENCY_MULT[cfg.potency] || 1.0;
+      const multShiny = cfg.shiny ? 3.0 : 1.0;
+      const multMega = cfg.mega ? 1.15 : 1.0;
+      const ref = Number(cfg.refine) || 0;
+
+      // Força relativa de nascimento (0 a 1 para não-lendários; >1 com ×4 Lendário)
+      const birthFactor = (0.35 + 0.35 * ivNorm + 0.30 * qNorm) * (multPot / 2.0) * (multShiny / 3.0) * multMega * (1 + ref * 0.015);
+      const isLeg = cfg.potency === 'LEG';
+
+      let noteUsed;
+      if (cfg.note !== undefined && cfg.note !== null && cfg.note !== '' && !isNaN(Number(cfg.note)) && !isLeg) {
+        noteUsed = Math.min(10, Math.max(0, Number(cfg.note)));
+      } else {
+        // Estima nota N= (0–10) a partir dos eixos de nascimento
+        noteUsed = Math.min(10, Math.max(0, Math.pow(Math.min(1, birthFactor), 0.58) * 10));
+      }
+
+      // Se o usuário informou um Poder Ranking real na ficha, calibra o score exato da ficha;
+      // caso contrário, deriva o score da Nota N= alinhada ao ⚔@100
+      let score;
+      if (cfg.rankingPower && Number(cfg.rankingPower) > 0 && Number(cfg.level) > 0) {
+        score = Number(cfg.rankingPower) / (Number(cfg.level) * 10);
+      } else {
+        const baseScoreFromNote = 0.22 + (noteUsed / 10) * 0.52;
+        score = isLeg ? baseScoreFromNote * 2.0 : baseScoreFromNote;
+      }
+
+      return { score, noteUsed, isLeg };
+    }
+
+    function calculatePokemonWikiMetrics(cfg) {
+      const realLvl = Math.max(1, Number(cfg.level) || 1);
+      const compLvl = nivelComprimido(realLvl);
+      const multPot = POTENCY_MULT[cfg.potency] || 1.0;
+      const multShiny = cfg.shiny ? 3.0 : 1.0;
+      const multMega = cfg.mega ? 1.20 : 1.0;
+      const q = Number(cfg.quality) || 1.0;
+      const ref = Number(cfg.refine) || 0;
+
+      const statKeys = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+      const rawStats = {};
+      const pvpStats = {};
+      let rawTotal = 0;
+      let pvpTotal = 0;
+
+      statKeys.forEach(k => {
+        const baseVal = ((Number(cfg.base[k]) || 50) + ref) * multMega;
+        const ivVal = Number(cfg.ivs[k]) || 0;
+        const expQ = (k === 'hp' || k === 'spd') ? 0.95 : 0.80;
+        const core = (baseVal + 2 * ivVal) * Math.pow(q, expQ) * multPot * multShiny;
+
+        const valRaw = Math.round(core * (realLvl / 100));
+        const valPvp = Math.round(core * (compLvl / 100));
+
+        rawStats[k] = valRaw;
+        pvpStats[k] = valPvp;
+        rawTotal += valRaw;
+        pvpTotal += valPvp;
+      });
+
+      // HP de Combate oficial da Wiki: máx(24, arred(hp × 12))
+      const hpCombateHunt = Math.max(24, Math.round(rawStats.hp * 12));
+      const hpCombatePvp = Math.max(24, Math.round(pvpStats.hp * 12));
+
+      // Score (0–1), Poder Ranking ⚔ e Poder PvP ⚔ oficiais
+      const { score, noteUsed, isLeg } = computeBirthScoreAndNote(cfg);
+      const poderRanking = Math.round(realLvl * 10 * score);
+      const poderPvpWiki = Math.round(compLvl * 10 * score);
+
+      return {
+        realLvl,
+        compLvl,
+        rawStats,
+        pvpStats,
+        rawTotal,
+        pvpTotal,
+        hpCombateHunt,
+        hpCombatePvp,
+        score,
+        noteUsed,
+        isLeg,
+        poderRanking,
+        poderPvpWiki
+      };
+    }
+
+    // =========================================================================
+    // 4. RADAR ELEMENTAL PVP (MATRIZ DEFENSIVA 18 TIPOS)
+    // =========================================================================
+    function getDefensiveMultiplier(t1, t2, atkType) {
+      const m1 = (TYPE_CHART[t1] && TYPE_CHART[t1][atkType] !== undefined) ? TYPE_CHART[t1][atkType] : 1;
+      const m2 = (t2 && t2 !== 'NONE' && t2 !== t1 && TYPE_CHART[t2] && TYPE_CHART[t2][atkType] !== undefined) ? TYPE_CHART[t2][atkType] : 1;
+      return m1 * m2;
+    }
+
+    function renderTeamElementalCoverage(team) {
+      const quadWeakList = [];
+      const exposedTypes = [];
+      const strongResists = [];
+
+      ALL_TYPES.forEach(atkType => {
+        let weak4x = [];
+        let weak2x = [];
+        let resistOrImmune = [];
+
+        team.forEach(p => {
+          const t1 = (p.type1 || 'NORMAL').toUpperCase();
+          const t2 = (p.type2 || 'NONE').toUpperCase();
+          const mult = getDefensiveMultiplier(t1, t2, atkType);
+          if (mult >= 4) {
+            weak4x.push(p.name);
+            quadWeakList.push({ type: atkType, pokemon: p.name });
+          } else if (mult >= 2) {
+            weak2x.push(p.name);
+          } else if (mult <= 0.5) {
+            resistOrImmune.push({ name: p.name, mult });
+          }
+        });
+
+        const totalWeak = weak4x.length + weak2x.length;
+        if (totalWeak >= 2 && resistOrImmune.length <= 1) {
+          exposedTypes.push({
+            type: atkType,
+            weakCount: totalWeak,
+            resCount: resistOrImmune.length,
+            targets: [...weak4x.map(n => `${n} (4×)`), ...weak2x.map(n => `${n} (2×)`)].join(', ')
+          });
+        }
+        if (resistOrImmune.length >= 2) {
+          strongResists.push({ type: atkType, count: resistOrImmune.length });
+        }
+      });
+
+      const score = Math.max(0, 100 - quadWeakList.length * 10 - exposedTypes.length * 8 + strongResists.length * 2);
+      document.getElementById('coverage-score-badge').textContent = `Nota Defensiva: ${Math.min(100, score)}/100 • ${quadWeakList.length} Fraquezas 4×`;
+
+      document.getElementById('coverage-alerts-grid').innerHTML = `
+        <div class="bg-red-950/35 border border-red-700/50 rounded-xl p-3 space-y-1.5">
+          <div class="font-bold text-red-300">⚠️ Fraquezas Críticas 4× (${quadWeakList.length})</div>
+          ${quadWeakList.length ? quadWeakList.map(q => `
+            <div class="text-gray-200 flex justify-between bg-black/25 px-2 py-1 rounded">
+              <span class="font-semibold text-white">${q.pokemon}</span>
+              <span class="text-red-400 font-bold">4× ${TYPE_LABELS_PT[q.type]}</span>
+            </div>
+          `).join('') : '<div class="text-emerald-300">Nenhuma fraqueza 4× na equipe!</div>'}
+        </div>
+
+        <div class="bg-amber-950/35 border border-amber-700/50 rounded-xl p-3 space-y-1.5">
+          <div class="font-bold text-amber-300">🎯 Tipos Descobertos no Time (${exposedTypes.length})</div>
+          ${exposedTypes.length ? exposedTypes.slice(0, 4).map(e => `
+            <div class="text-gray-200 bg-black/25 px-2 py-1 rounded">
+              <div class="flex justify-between font-bold text-amber-300">
+                <span>Atacante ${TYPE_LABELS_PT[e.type]}</span>
+                <span>${e.weakCount} fracos / ${e.resCount} res.</span>
+              </div>
+              <div class="text-[10px] text-gray-400 truncate">${e.targets}</div>
+            </div>
+          `).join('') : '<div class="text-emerald-300">Todos os tipos têm boa resposta defensiva!</div>'}
+        </div>
+
+        <div class="bg-emerald-950/35 border border-emerald-700/50 rounded-xl p-3 space-y-1.5">
+          <div class="font-bold text-emerald-300">🛡️ Melhores Resistências (${strongResists.length} tipos)</div>
+          <div class="flex flex-wrap gap-1 pt-0.5">
+            ${strongResists.length ? strongResists.map(r => `
+              <span class="bg-emerald-900/60 border border-emerald-600/40 text-emerald-200 px-2 py-0.5 rounded text-[11px] font-semibold">
+                ${TYPE_LABELS_PT[r.type]} (${r.count}×)
+              </span>
+            `).join('') : '<span class="text-gray-400">Adicione mais Pokémon para calcular.</span>'}
+          </div>
+          <div class="text-[10px] text-gray-400 pt-1">Dica: Trocar Dragonite por Metagross/Garchomp neutraliza Gelo e Fada.</div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 5. SELETOR MULTI-CONTAS & VISÃO CONSOLIDADA DAS 4 CONTAS
+    // =========================================================================
+    function renderAccountSwitcher() {
+      const bar = document.getElementById('account-switcher-bar');
+      bar.innerHTML = appState.accounts.map(acc => {
+        const isActive = acc.id === appState.activeAccountId;
+        const unlocked = [...OUTLANDS_DATA].reverse().find(o => acc.trainerLevel >= o.level) || OUTLANDS_DATA[0];
+        return `
+          <button onclick="switchAccount('${acc.id}')" class="${isActive ? 'acc-active' : 'bg-game-card hover:bg-game-cardHover border-game-border text-gray-300'} border px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
+            <span>${acc.name}</span>
+            <span class="text-[10px] opacity-85 bg-black/25 px-1.5 py-0.5 rounded">Nv ${acc.trainerLevel} • O${unlocked.id}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function switchAccount(accId) {
+      appState.activeAccountId = accId;
+      saveState(true);
+      refreshAllTabsForActiveAccount();
+      showToast(`Alternado para: ${getActiveAccount().name}`);
+    }
+
+    function toggleOverviewModal(open) {
+      const modal = document.getElementById('overview-modal');
+      if (!open) {
+        modal.classList.add('hidden');
+        return;
+      }
+      modal.classList.remove('hidden');
+
+      let sumGold = 0, sumGems = 0, sumTokensDay = 0, sumEachFragWeek = 0, sumRevDayGold = 0, sumRevDayGems = 0;
+      const taxFactor = appState.applyTax ? 0.85 : 1.0;
+
+      const rowsHtml = appState.accounts.map(acc => {
+        const unlocked = [...OUTLANDS_DATA].reverse().find(o => acc.trainerLevel >= o.level) || OUTLANDS_DATA[0];
+        const totalMult = unlocked.mult * (1 + (acc.lootBonus || 0) / 100);
+        const tokensDay = (acc.killsPerHour * 24) / (10000 / totalMult);
+        const eachFragWeek = (acc.killsPerHour * 168) / (250000 / totalMult);
+        const eachFragDay = eachFragWeek / 7;
+
+        const revDayGold = (tokensDay * appState.prices.tokenGold + 4 * eachFragDay * appState.prices.fragGold) * taxFactor;
+        const revDayGems = (tokensDay * appState.prices.tokenGems + 4 * eachFragDay * appState.prices.fragGems) * taxFactor;
+
+        sumGold += Number(acc.gold) || 0;
+        sumGems += Number(acc.gems) || 0;
+        sumTokensDay += tokensDay;
+        sumEachFragWeek += eachFragWeek;
+        sumRevDayGold += revDayGold;
+        sumRevDayGems += revDayGems;
+
+        return `
+          <tr class="border-b border-game-border/50">
+            <td class="py-2.5 px-2 font-bold text-white">${acc.name}</td>
+            <td class="py-2.5 px-2 text-amber-300 font-semibold">Nv ${acc.trainerLevel.toLocaleString('pt-BR')}</td>
+            <td class="py-2.5 px-2 text-purple-300 font-semibold">Outland ${unlocked.id} (×${totalMult.toFixed(2).replace('.', ',')})</td>
+            <td class="py-2.5 px-2 text-right text-gray-200">${acc.killsPerHour.toLocaleString('pt-BR')}/h</td>
+            <td class="py-2.5 px-2 text-right font-bold text-amber-400">${tokensDay.toFixed(2).replace('.', ',')}/dia</td>
+            <td class="py-2.5 px-2 text-right font-bold text-emerald-400">${(eachFragWeek * 4).toFixed(2).replace('.', ',')}/sem</td>
+            <td class="py-2.5 px-2 text-right text-sky-300 font-semibold">${formatGoldM(revDayGold)} | ${revDayGems.toFixed(1).replace('.', ',')}g</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('overview-modal-body').innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-game-bg border border-game-border rounded-xl p-3">
+            <div class="text-[11px] text-gray-400">Caixa Somado (4 Contas)</div>
+            <div class="text-base font-extrabold text-amber-400 mt-0.5">${formatGoldM(sumGold)}</div>
+            <div class="text-xs font-bold text-sky-400">${sumGems.toLocaleString('pt-BR')} Gemas</div>
+          </div>
+          <div class="bg-game-bg border border-amber-500/40 rounded-xl p-3">
+            <div class="text-[11px] text-amber-300">Boss Tokens / Dia (Total)</div>
+            <div class="text-xl font-extrabold text-amber-400 mt-0.5">${sumTokensDay.toFixed(2).replace('.', ',')} / dia</div>
+            <div class="text-[11px] text-gray-400">${(sumTokensDay * 7).toFixed(1).replace('.', ',')} tokens/semana</div>
+          </div>
+          <div class="bg-game-bg border border-emerald-500/40 rounded-xl p-3">
+            <div class="text-[11px] text-emerald-300">Fragmentos Raros / Semana</div>
+            <div class="text-xl font-extrabold text-emerald-400 mt-0.5">${(sumEachFragWeek * 4).toFixed(2).replace('.', ',')} / sem</div>
+            <div class="text-[11px] text-gray-400">~${sumEachFragWeek.toFixed(2).replace('.', ',')} de cada tipo/sem</div>
+          </div>
+          <div class="bg-game-bg border border-purple-500/40 rounded-xl p-3">
+            <div class="text-[11px] text-purple-300">Rendimento Líquido / Dia</div>
+            <div class="text-base font-extrabold text-white mt-0.5">${formatGoldM(sumRevDayGold)} / dia</div>
+            <div class="text-xs font-bold text-sky-400">${sumRevDayGems.toFixed(1).replace('.', ',')} Gemas / dia</div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto bg-game-bg/60 rounded-xl border border-game-border p-2">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-game-border text-gray-400">
+                <th class="py-2 px-2">Conta</th>
+                <th class="py-2 px-2">Nível</th>
+                <th class="py-2 px-2">Outland Atual</th>
+                <th class="py-2 px-2 text-right">Abates/h</th>
+                <th class="py-2 px-2 text-right">Tokens/Dia</th>
+                <th class="py-2 px-2 text-right">Raros Somados/Sem</th>
+                <th class="py-2 px-2 text-right">Lucro Líquido/Dia</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 6. NAVEGAÇÃO POR ABAS
+    // =========================================================================
+    function switchTab(tabName) {
+      ['team', 'compare', 'outland', 'history'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`btn-tab-${t}`);
+        btn.classList.remove('tab-active');
+        btn.classList.add('bg-game-card', 'text-gray-300', 'border-game-border');
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`btn-tab-${tabName}`);
+      activeBtn.classList.add('tab-active');
+      activeBtn.classList.remove('bg-game-card', 'text-gray-300', 'border-game-border');
+
+      if (tabName === 'history') {
+        renderBossRoiSection();
+        renderHistoryChart();
+      }
+      if (tabName === 'compare') renderComparison();
+    }
+
+    // =========================================================================
+    // 7. ABA 1: EQUIPE, CONTA & RADAR ELEMENTAL
+    // =========================================================================
+    function renderAccountAndTeamTab() {
+      const acc = getActiveAccount();
+      const unlocked = [...OUTLANDS_DATA].reverse().find(o => acc.trainerLevel >= o.level) || OUTLANDS_DATA[0];
+
+      document.getElementById('acc-panel-title').textContent = acc.name;
+      document.getElementById('acc-unlocked-badge').textContent = `Outland ${unlocked.id} (${unlocked.mult.toFixed(2).replace('.', ',')}x) Desbloqueada`;
+      document.getElementById('acc-name-input').value = acc.name;
+      document.getElementById('acc-level-input').value = acc.trainerLevel;
+      document.getElementById('acc-gold-input').value = acc.gold;
+      document.getElementById('acc-gems-input').value = acc.gems;
+      document.getElementById('acc-kills-input').value = acc.killsPerHour;
+      document.getElementById('acc-xph-input').value = acc.xpPerHour;
+      document.getElementById('acc-lootboost-input').checked = (acc.lootBonus || 0) > 0;
+      document.getElementById('acc-xpbonus-input').value = acc.xpBonus || 0;
+
+      const curCubicXp = xpTotal(acc.trainerLevel);
+      const nextLvlCost = xpDoNivel(acc.trainerLevel + 1);
+      document.getElementById('acc-xp-total-summary').innerHTML =
+        `XP Total Acumulado (Cúbica): <strong class="text-purple-300">${formatLargeXp(curCubicXp)}</strong> • Próx. Nível (${acc.trainerLevel + 1}): <strong class="text-amber-300">${formatLargeXp(nextLvlCost)} XP</strong>`;
+
+      renderTeamElementalCoverage(acc.team);
+
+      const grid = document.getElementById('team-cards-grid');
+      const slotSel = document.getElementById('form-slot-select');
+
+      let totalRealLvl = 0, totalPvpLvl = 0, totalRealPvpPower = 0, totalRankingSword = 0, totalPvpSword = 0;
+      let shinyCount = 0, refineTotal = 0;
+      const potCounts = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, LEG: 0 };
+
+      grid.innerHTML = acc.team.map((p, idx) => {
+        const metrics = calculatePokemonWikiMetrics(p);
+        const tier = getNoteTier(metrics.noteUsed, metrics.isLeg);
+        const compLvlRounded = Math.round(metrics.compLvl);
+        const ivSum = Object.values(p.ivs).reduce((a, b) => a + Number(b), 0);
+
+        totalRealLvl += Number(p.level) || 0;
+        totalPvpLvl += compLvlRounded;
+        totalRealPvpPower += Number(p.pvpPower) || 0;
+        totalRankingSword += metrics.poderRanking;
+        totalPvpSword += metrics.poderPvpWiki;
+        if (p.shiny) shinyCount++;
+        refineTotal += Number(p.refine) || 0;
+        potCounts[p.potency] = (potCounts[p.potency] || 0) + 1;
+
+        const t1Label = TYPE_LABELS_PT[p.type1] || p.type1 || 'Normal';
+        const t2Label = (p.type2 && p.type2 !== 'NONE') ? ` / ${TYPE_LABELS_PT[p.type2] || p.type2}` : '';
+        const potLabel = p.potency === 'LEG' ? 'Lend. 4×' : p.potency;
+
+        return `
+          <div class="bg-game-card hover:bg-game-cardHover border ${tier.borderClass} rounded-2xl p-4 flex flex-col justify-between transition">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-1">
+                    ${p.shiny ? '<span class="text-amber-400 text-sm">✨</span>' : ''}
+                    <h4 class="font-bold text-white text-sm">${p.name}</h4>
+                  </div>
+                  <div class="text-[10px] text-gray-400 font-semibold mt-0.5">${t1Label}${t2Label}</div>
+                </div>
+                <span class="p-badge-${p.potency} text-[11px] font-extrabold px-2 py-0.5 rounded-md">${potLabel}</span>
+              </div>
+
+              <!-- Faixa da Nota N= (Wiki) -->
+              <div class="mt-2">
+                <span class="inline-flex items-center justify-between w-full text-[10px] font-extrabold px-2 py-1 rounded-lg border ${tier.badgeClass}">
+                  <span>${metrics.isLeg ? 'Nota: INESTIMÁVEL' : `N= ${metrics.noteUsed.toFixed(3).replace('.', ',')}`}</span>
+                  <span>${tier.label}</span>
+                </span>
+              </div>
+
+              <div class="mt-2 flex items-baseline justify-between border-b border-game-border/60 pb-1.5">
+                <span class="text-xs font-extrabold text-white">Nv ${Number(p.level).toLocaleString('pt-BR')}</span>
+                <span class="text-[10px] text-amber-400 font-semibold" title="Nível comprimido pós-150">conta como Nv ${compLvlRounded}</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-1 text-[11px] mt-2">
+                <div class="bg-game-bg px-2 py-1 rounded flex justify-between"><span class="text-gray-400">IV:</span><span class="font-bold text-sky-300">${ivSum}</span></div>
+                <div class="bg-game-bg px-2 py-1 rounded flex justify-between"><span class="text-gray-400">Qual:</span><span class="font-bold text-amber-300">${Number(p.quality).toFixed(3).replace('.', ',')}</span></div>
+                <div class="bg-game-bg px-2 py-1 rounded flex justify-between"><span class="text-gray-400">Refino:</span><span class="font-bold text-emerald-400">+${p.refine}</span></div>
+                <div class="bg-game-bg px-2 py-1 rounded flex justify-between"><span class="text-gray-400">HP Comb:</span><span class="font-bold text-rose-300">${metrics.hpCombatePvp.toLocaleString('pt-BR')}</span></div>
+              </div>
+
+              <div class="mt-2 space-y-1">
+                <div class="bg-amber-950/30 border border-amber-700/40 rounded-lg px-2 py-1 flex justify-between items-center text-[11px]">
+                  <span class="text-gray-400">Poder Ranking ⚔:</span>
+                  <span class="font-extrabold text-amber-300">${metrics.poderRanking.toLocaleString('pt-BR')}</span>
+                </div>
+                <div class="bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-2 py-1 flex justify-between items-center text-[11px]">
+                  <span class="text-gray-400">Poder na Luta PvP:</span>
+                  <span class="font-extrabold text-emerald-400">${(Number(p.pvpPower) || 0).toLocaleString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 mt-3 pt-2 border-t border-game-border/60">
+              <button onclick="loadSlotIntoForm(${idx})" class="bg-purple-700/80 hover:bg-purple-600 text-white text-[11px] font-semibold py-1.5 rounded-lg cursor-pointer">Editar</button>
+              <button onclick="sendTeamMemberToCompare(${idx})" class="bg-game-bg hover:bg-game-cardHover border border-game-border text-sky-300 text-[11px] font-semibold py-1.5 rounded-lg cursor-pointer">Simular / Comp.</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('team-total-real-pvp-power').textContent = totalRealPvpPower.toLocaleString('pt-BR');
+      document.getElementById('team-calc-pvp-sword').textContent = `⚔ PvP Fórmula Wiki: ${totalPvpSword.toLocaleString('pt-BR')}`;
+      document.getElementById('team-total-ranking-sword').textContent = totalRankingSword.toLocaleString('pt-BR');
+      document.getElementById('team-total-real-lvl').textContent = totalRealLvl.toLocaleString('pt-BR');
+      document.getElementById('team-total-pvp-lvl').textContent = `(PvP: ${totalPvpLvl.toLocaleString('pt-BR')})`;
+      document.getElementById('team-avg-real-lvl').textContent = acc.team.length ? `Média Real: Nv ${(totalRealLvl / acc.team.length).toFixed(1).replace('.', ',')}` : 'Sem Pokémon';
+
+      const potText = Object.entries(potCounts).filter(([, c]) => c > 0).reverse().map(([k, c]) => `${c}× ${k}`).join(' • ') || 'Nenhum';
+      document.getElementById('team-mult-summary').textContent = potText;
+      document.getElementById('team-shiny-summary').textContent = `${shinyCount} Shinies • +${refineTotal} Refinos totais`;
+
+      const prevSlot = Number(slotSel.value) || 0;
+      slotSel.innerHTML = acc.team.map((p, i) => `<option value="${i}">Slot ${i + 1}: ${p.name} (Nv ${p.level})</option>`).join('');
+      if (acc.team.length > 0) {
+        const validIdx = prevSlot < acc.team.length ? prevSlot : 0;
+        slotSel.value = validIdx;
+        loadSlotIntoForm(validIdx);
+      }
+
+      ['A', 'B'].forEach(side => {
+        const cmpSel = document.getElementById(`cmp-load-${side}`);
+        cmpSel.innerHTML = `<option value="">-- Carregar de ${acc.name} --</option>` +
+          acc.team.map((p, i) => `<option value="${i}">${p.name} (Nv ${p.level} • ${p.potency})</option>`).join('');
+      });
+    }
+
+    function updateAccountField(field, value) {
+      const acc = getActiveAccount();
+      acc[field] = value;
+      if (field === 'trainerLevel') {
+        const unlocked = [...OUTLANDS_DATA].reverse().find(o => value >= o.level) || OUTLANDS_DATA[0];
+        acc.selectedOutland = unlocked.id;
+      }
+      saveState(true);
+      renderAccountAndTeamTab();
+      syncOutlandTabWithAccount();
+    }
+
+    function addNewPokemonSlot() {
+      const acc = getActiveAccount();
+      acc.team.push({
+        name: `Novo Pokémon ${acc.team.length + 1}`,
+        species: "Personalizado",
+        type1: "NORMAL",
+        type2: "NONE",
+        level: 100,
+        potency: "P1",
+        quality: 1.500,
+        refine: 0,
+        shiny: false,
+        note: 3.000,
+        rankingPower: 0,
+        pvpPower: 1000,
+        ivs: { hp: 16, atk: 16, def: 16, spa: 16, spd: 16, spe: 16 },
+        base: { hp: 80, atk: 80, def: 80, spa: 80, spd: 80, spe: 80 }
+      });
+      saveState();
+      renderAccountAndTeamTab();
+      loadSlotIntoForm(acc.team.length - 1);
+    }
+
+    function deleteCurrentPokemonSlot() {
+      const acc = getActiveAccount();
+      if (acc.team.length <= 1) return showToast("Mantenha pelo menos 1 Pokémon na equipe.");
+      const idx = Number(document.getElementById('form-slot-select').value) || 0;
+      acc.team.splice(idx, 1);
+      saveState();
+      renderAccountAndTeamTab();
+    }
+
+    function loadSlotIntoForm(idx) {
+      const acc = getActiveAccount();
+      const p = acc.team[Number(idx)];
+      if (!p) return;
+      document.getElementById('form-slot-select').value = idx;
+      document.getElementById('form-species-preset').value = SPECIES_PRESETS[p.species] ? p.species : 'Personalizado';
+      document.getElementById('form-name').value = p.name;
+      document.getElementById('form-type1').value = p.type1 || 'NORMAL';
+      document.getElementById('form-type2').value = p.type2 || 'NONE';
+      document.getElementById('form-pvp-power').value = p.pvpPower || 0;
+      document.getElementById('form-ranking-power').value = p.rankingPower || '';
+      document.getElementById('form-level').value = p.level;
+      document.getElementById('form-potency').value = p.potency;
+      document.getElementById('form-quality').value = p.quality;
+      document.getElementById('form-refine').value = p.refine;
+      document.getElementById('form-note').value = p.note;
+      document.getElementById('form-shiny').checked = !!p.shiny;
+
+      ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+        document.getElementById(`form-iv-${k}`).value = p.ivs[k];
+        document.getElementById(`form-base-${k}`).value = p.base[k];
+      });
+      updateFormIvSum();
+    }
+
+    function applySpeciesPresetToForm(sp) {
+      const preset = SPECIES_PRESETS[sp];
+      if (!preset) return;
+      if (sp !== 'Personalizado') document.getElementById('form-name').value = sp;
+      document.getElementById('form-type1').value = preset.type1;
+      document.getElementById('form-type2').value = preset.type2;
+      ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+        document.getElementById(`form-base-${k}`).value = preset.base[k];
+      });
+    }
+
+    function updateFormIvSum() {
+      const sum = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].reduce((acc, k) => acc + (Number(document.getElementById(`form-iv-${k}`).value) || 0), 0);
+      document.getElementById('form-iv-sum').textContent = `Total: ${sum} / 192`;
+    }
+
+    function extractSheetData(rawText) {
+      const res = {};
+      const matchedSpecies = Object.keys(SPECIES_PRESETS).find(sp => sp !== 'Personalizado' && new RegExp(sp, 'i').test(rawText));
+      if (matchedSpecies) {
+        res.species = matchedSpecies;
+        res.name = matchedSpecies;
+        res.type1 = SPECIES_PRESETS[matchedSpecies].type1;
+        res.type2 = SPECIES_PRESETS[matchedSpecies].type2;
+        res.base = { ...SPECIES_PRESETS[matchedSpecies].base };
+      } else {
+        const firstLine = rawText.split('\n')[0].replace(/Nv\s*[\d.,]+.*/i, '').trim();
+        if (firstLine && firstLine.length < 32) res.name = firstLine;
+      }
+
+      const lvlMatch = rawText.match(/(?:Nv|Nível|Level|Lv)\.?\s*:?\s*([\d.]+)/i);
+      if (lvlMatch) res.level = parseInt(lvlMatch[1].replace(/\./g, ''), 10);
+
+      const potMatch = rawText.match(/\b(P[1-5])\b/i);
+      if (potMatch) res.potency = potMatch[1].toUpperCase();
+      if (/lend[aá]rio|m[ií]tico|4x/i.test(rawText)) res.potency = 'LEG';
+
+      const qualMatch = rawText.match(/(?:Q|Qualidade)\s*:?\s*([0-2][.,]\d{1,3})/i);
+      if (qualMatch) res.quality = parseFloat(qualMatch[1].replace(',', '.'));
+
+      const noteMatch = rawText.match(/(?:N=|N|Nota)\s*:?\s*(\d[.,]\d{1,3})/i);
+      if (noteMatch) res.note = parseFloat(noteMatch[1].replace(',', '.'));
+
+      const refMatch = rawText.match(/\+(\d{1,2})\b/);
+      if (refMatch) res.refine = parseInt(refMatch[1], 10);
+
+      const pvpPowerMatch = rawText.match(/(?:Poder na luta|Poder no PvP|Poder PvP)\s*:?\s*([\d.]+)/i);
+      if (pvpPowerMatch) res.pvpPower = parseInt(pvpPowerMatch[1].replace(/\./g, ''), 10);
+
+      const rankPowerMatch = rawText.match(/(?:Poder\s*\(ranking\)|Poder\s*no\s*PvE|Poder|⚔)\s*:?\s*([\d.]+)/i);
+      if (rankPowerMatch) res.rankingPower = parseInt(rankPowerMatch[1].replace(/\./g, ''), 10);
+
+      if (/shiny|✨|★/i.test(rawText)) res.shiny = true;
+
+      const ivPatterns = {
+        hp: /HP\s*:?\s*(\d{1,2})/i,
+        atk: /(?:ATK|Ataque)\s*:?\s*(\d{1,2})/i,
+        def: /(?:DEF|Defesa)\s*:?\s*(\d{1,2})/i,
+        spa: /(?:SPA|SP\.?\s*ATK|Atq\.?\s*Esp)\s*:?\s*(\d{1,2})/i,
+        spd: /(?:SPD|SP\.?\s*DEF|Def\.?\s*Esp)\s*:?\s*(\d{1,2})/i,
+        spe: /(?:SPE|VEL|Velocidade)\s*:?\s*(\d{1,2})/i
+      };
+
+      const ivs = {};
+      let foundIndiv = false;
+      Object.entries(ivPatterns).forEach(([k, rx]) => {
+        const m = rawText.match(rx);
+        if (m) {
+          ivs[k] = Math.min(32, parseInt(m[1], 10));
+          foundIndiv = true;
+        }
+      });
+
+      if (foundIndiv) {
+        res.ivs = ivs;
+      } else {
+        const totalIvMatch = rawText.match(/\bIV\s*:?\s*(\d{1,3})\b/i);
+        if (totalIvMatch) {
+          const totalIv = Math.min(192, parseInt(totalIvMatch[1], 10));
+          const baseEach = Math.floor(totalIv / 6);
+          let rem = totalIv % 6;
+          res.ivs = {};
+          ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+            res.ivs[k] = baseEach + (rem > 0 ? 1 : 0);
+            if (rem > 0) rem--;
+          });
+        }
+      }
+      return res;
+    }
+
+    function parsePokemonSheetToForm() {
+      const raw = document.getElementById('paste-sheet-input').value.trim();
+      if (!raw) return showToast("Cole a ficha do Pokémon primeiro!");
+      const data = extractSheetData(raw);
+
+      if (data.species) {
+        document.getElementById('form-species-preset').value = data.species;
+        applySpeciesPresetToForm(data.species);
+      }
+      if (data.name) document.getElementById('form-name').value = data.name;
+      if (data.level) document.getElementById('form-level').value = data.level;
+      if (data.potency) document.getElementById('form-potency').value = data.potency;
+      if (data.quality) document.getElementById('form-quality').value = data.quality;
+      if (data.note) document.getElementById('form-note').value = data.note;
+      if (data.refine !== undefined) document.getElementById('form-refine').value = data.refine;
+      if (data.pvpPower !== undefined) document.getElementById('form-pvp-power').value = data.pvpPower;
+      if (data.rankingPower !== undefined) document.getElementById('form-ranking-power').value = data.rankingPower;
+      if (data.shiny) document.getElementById('form-shiny').checked = true;
+      if (data.ivs) {
+        ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+          if (data.ivs[k] !== undefined) document.getElementById(`form-iv-${k}`).value = data.ivs[k];
+        });
+      }
+      updateFormIvSum();
+      showToast("Ficha extraída! Confira os campos e salve.");
+    }
+
+    function savePokemonForm(e) {
+      e.preventDefault();
+      const acc = getActiveAccount();
+      const idx = Number(document.getElementById('form-slot-select').value) || 0;
+      const rankPowerVal = document.getElementById('form-ranking-power').value;
+
+      acc.team[idx] = {
+        name: document.getElementById('form-name').value.trim() || `Pokémon ${idx + 1}`,
+        species: document.getElementById('form-species-preset').value,
+        type1: document.getElementById('form-type1').value,
+        type2: document.getElementById('form-type2').value,
+        pvpPower: Number(document.getElementById('form-pvp-power').value) || 0,
+        rankingPower: rankPowerVal !== '' ? Number(rankPowerVal) : 0,
+        level: Number(document.getElementById('form-level').value) || 1,
+        potency: document.getElementById('form-potency').value,
+        quality: Number(document.getElementById('form-quality').value) || 1.0,
+        refine: Number(document.getElementById('form-refine').value) || 0,
+        note: Number(document.getElementById('form-note').value) || 3.0,
+        shiny: document.getElementById('form-shiny').checked,
+        ivs: {
+          hp: Number(document.getElementById('form-iv-hp').value) || 0,
+          atk: Number(document.getElementById('form-iv-atk').value) || 0,
+          def: Number(document.getElementById('form-iv-def').value) || 0,
+          spa: Number(document.getElementById('form-iv-spa').value) || 0,
+          spd: Number(document.getElementById('form-iv-spd').value) || 0,
+          spe: Number(document.getElementById('form-iv-spe').value) || 0
+        },
+        base: {
+          hp: Number(document.getElementById('form-base-hp').value) || 80,
+          atk: Number(document.getElementById('form-base-atk').value) || 80,
+          def: Number(document.getElementById('form-base-def').value) || 80,
+          spa: Number(document.getElementById('form-base-spa').value) || 80,
+          spd: Number(document.getElementById('form-base-spd').value) || 80,
+          spe: Number(document.getElementById('form-base-spe').value) || 80
+        }
+      };
+      saveState();
+      renderAccountAndTeamTab();
+    }
+
+    // =========================================================================
+    // 8. ABA 2: SIMULADOR "E SE?" & COMPARADOR (2 POKÉMON LADO A LADO)
+    // =========================================================================
+    function initCompareTab() {
+      ['A', 'B'].forEach(side => {
+        const spSel = document.getElementById(`cmp-species-${side}`);
+        spSel.innerHTML = Object.keys(SPECIES_PRESETS).map(sp => `<option value="${sp}">${sp}</option>`).join('');
+        spSel.value = side === 'A' ? 'Dragonite' : 'Metagross';
+      });
+      renderComparison();
+    }
+
+    function sendTeamMemberToCompare(idx) {
+      switchTab('compare');
+      loadTeamPokemonIntoCompare('A', idx);
+    }
+
+    function loadTeamPokemonIntoCompare(side, idx) {
+      if (idx === "") return;
+      const acc = getActiveAccount();
+      const p = acc.team[Number(idx)];
+      if (!p) return;
+
+      document.getElementById(`cmp-species-${side}`).value = SPECIES_PRESETS[p.species] ? p.species : 'Personalizado';
+      document.getElementById(`cmp-name-${side}`).value = p.name;
+      document.getElementById(`cmp-level-${side}`).value = p.level;
+      document.getElementById(`cmp-pot-${side}`).value = p.potency;
+      document.getElementById(`cmp-qual-${side}`).value = p.quality;
+      document.getElementById(`cmp-ref-${side}`).value = p.refine;
+      document.getElementById(`cmp-note-${side}`).value = p.note || '';
+      document.getElementById(`cmp-shiny-${side}`).checked = !!p.shiny;
+      document.getElementById(`cmp-mega-${side}`).checked = false;
+
+      ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+        document.getElementById(`cmp-iv-${k}-${side}`).value = p.ivs[k];
+        document.getElementById(`cmp-base-${k}-${side}`).value = p.base[k];
+      });
+      renderComparison();
+    }
+
+    function applyPresetToCompare(side, sp) {
+      const preset = SPECIES_PRESETS[sp];
+      if (!preset) return;
+      if (sp !== 'Personalizado') document.getElementById(`cmp-name-${side}`).value = sp;
+      ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+        document.getElementById(`cmp-base-${k}-${side}`).value = preset.base[k];
+      });
+      renderComparison();
+    }
+
+    function parseCompareSheet(side) {
+      const raw = document.getElementById(`cmp-paste-${side}`).value.trim();
+      if (!raw) return showToast(`Cole a ficha do Pokémon ${side} primeiro!`);
+      const data = extractSheetData(raw);
+
+      if (data.species) {
+        document.getElementById(`cmp-species-${side}`).value = data.species;
+        applyPresetToCompare(side, data.species);
+      }
+      if (data.name) document.getElementById(`cmp-name-${side}`).value = data.name;
+      if (data.level) document.getElementById(`cmp-level-${side}`).value = data.level;
+      if (data.potency) document.getElementById(`cmp-pot-${side}`).value = data.potency;
+      if (data.quality) document.getElementById(`cmp-qual-${side}`).value = data.quality;
+      if (data.note !== undefined) document.getElementById(`cmp-note-${side}`).value = data.note;
+      if (data.refine !== undefined) document.getElementById(`cmp-ref-${side}`).value = data.refine;
+      if (data.shiny) document.getElementById(`cmp-shiny-${side}`).checked = true;
+      if (data.ivs) {
+        ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+          if (data.ivs[k] !== undefined) document.getElementById(`cmp-iv-${k}-${side}`).value = data.ivs[k];
+        });
+      }
+      renderComparison();
+      showToast(`Ficha extraída para o Pokémon ${side}!`);
+    }
+
+    function getCompareSideObject(side) {
+      return {
+        name: document.getElementById(`cmp-name-${side}`).value.trim() || `Pokémon ${side}`,
+        level: Number(document.getElementById(`cmp-level-${side}`).value) || 1,
+        potency: document.getElementById(`cmp-pot-${side}`).value,
+        quality: Number(document.getElementById(`cmp-qual-${side}`).value) || 1.0,
+        refine: Number(document.getElementById(`cmp-ref-${side}`).value) || 0,
+        note: document.getElementById(`cmp-note-${side}`).value,
+        shiny: document.getElementById(`cmp-shiny-${side}`).checked,
+        mega: document.getElementById(`cmp-mega-${side}`).checked,
+        ivs: {
+          hp: Number(document.getElementById(`cmp-iv-hp-${side}`).value) || 0,
+          atk: Number(document.getElementById(`cmp-iv-atk-${side}`).value) || 0,
+          def: Number(document.getElementById(`cmp-iv-def-${side}`).value) || 0,
+          spa: Number(document.getElementById(`cmp-iv-spa-${side}`).value) || 0,
+          spd: Number(document.getElementById(`cmp-iv-spd-${side}`).value) || 0,
+          spe: Number(document.getElementById(`cmp-iv-spe-${side}`).value) || 0
+        },
+        base: {
+          hp: Number(document.getElementById(`cmp-base-hp-${side}`).value) || 80,
+          atk: Number(document.getElementById(`cmp-base-atk-${side}`).value) || 80,
+          def: Number(document.getElementById(`cmp-base-def-${side}`).value) || 80,
+          spa: Number(document.getElementById(`cmp-base-spa-${side}`).value) || 80,
+          spd: Number(document.getElementById(`cmp-base-spd-${side}`).value) || 80,
+          spe: Number(document.getElementById(`cmp-base-spe-${side}`).value) || 80
+        }
+      };
+    }
+
+    function swapCompareSides() {
+      const a = getCompareSideObject('A');
+      const b = getCompareSideObject('B');
+      const spA = document.getElementById('cmp-species-A').value;
+      const spB = document.getElementById('cmp-species-B').value;
+
+      const setSide = (side, obj, sp) => {
+        document.getElementById(`cmp-species-${side}`).value = sp;
+        document.getElementById(`cmp-name-${side}`).value = obj.name;
+        document.getElementById(`cmp-level-${side}`).value = obj.level;
+        document.getElementById(`cmp-pot-${side}`).value = obj.potency;
+        document.getElementById(`cmp-qual-${side}`).value = obj.quality;
+        document.getElementById(`cmp-ref-${side}`).value = obj.refine;
+        document.getElementById(`cmp-note-${side}`).value = obj.note;
+        document.getElementById(`cmp-shiny-${side}`).checked = obj.shiny;
+        document.getElementById(`cmp-mega-${side}`).checked = obj.mega;
+        ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach(k => {
+          document.getElementById(`cmp-iv-${k}-${side}`).value = obj.ivs[k];
+          document.getElementById(`cmp-base-${k}-${side}`).value = obj.base[k];
+        });
+      };
+
+      setSide('A', b, spB);
+      setSide('B', a, spA);
+      renderComparison();
+    }
+
+    function formatDiffPct(a, b) {
+      if (a <= 0) return '<span class="text-gray-500">—</span>';
+      const pct = ((b - a) / a) * 100;
+      const color = pct > 0.1 ? 'text-emerald-400' : (pct < -0.1 ? 'text-red-400' : 'text-gray-400');
+      const sign = pct > 0 ? '+' : '';
+      return `<span class="font-bold ${color}">${sign}${pct.toFixed(1).replace('.', ',')}%</span>`;
+    }
+
+    function renderComparison() {
+      const objA = getCompareSideObject('A');
+      const objB = getCompareSideObject('B');
+      const mA = calculatePokemonWikiMetrics(objA);
+      const mB = calculatePokemonWikiMetrics(objB);
+      const tierA = getNoteTier(mA.noteUsed, mA.isLeg);
+      const tierB = getNoteTier(mB.noteUsed, mB.isLeg);
+
+      document.getElementById('cmp-wiki-cards').innerHTML = [
+        { side: 'A', obj: objA, m: mA, tier: tierA, accent: 'text-sky-300' },
+        { side: 'B', obj: objB, m: mB, tier: tierB, accent: 'text-amber-300' }
+      ].map(item => `
+        <div class="bg-game-bg/90 border ${item.tier.borderClass} rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold ${item.accent}">${item.obj.shiny ? '✨ ' : ''}${item.obj.name} (Nv ${item.obj.level} • conta como Nv ${Math.round(item.m.compLvl)})</span>
+            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded border ${item.tier.badgeClass}">
+              ${item.m.isLeg ? 'INESTIMÁVEL' : `N= ${item.m.noteUsed.toFixed(3).replace('.', ',')} • ${item.tier.label}`}
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="bg-game-card p-2 rounded-lg border border-game-border">
+              <div class="text-[10px] text-gray-400">Poder Ranking ⚔</div>
+              <div class="font-extrabold text-amber-400">${item.m.poderRanking.toLocaleString('pt-BR')}</div>
+            </div>
+            <div class="bg-game-card p-2 rounded-lg border border-game-border">
+              <div class="text-[10px] text-gray-400">Poder PvP ⚔</div>
+              <div class="font-extrabold text-emerald-400">${item.m.poderPvpWiki.toLocaleString('pt-BR')}</div>
+            </div>
+            <div class="bg-game-card p-2 rounded-lg border border-game-border">
+              <div class="text-[10px] text-gray-400">HP Combate (PvP)</div>
+              <div class="font-extrabold text-rose-300">${item.m.hpCombatePvp.toLocaleString('pt-BR')}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('cmp-th-raw-A').textContent = `Hunt ${objA.name} (Nv ${objA.level})`;
+      document.getElementById('cmp-th-raw-B').textContent = `Hunt ${objB.name} (Nv ${objB.level})`;
+      document.getElementById('cmp-th-pvp-A').textContent = `PvP ${objA.name} (Nv ${Math.round(mA.compLvl)})`;
+      document.getElementById('cmp-th-pvp-B').textContent = `PvP ${objB.name} (Nv ${Math.round(mB.compLvl)})`;
+
+      const pvpAdv = mA.pvpTotal > 0 ? ((mB.pvpTotal - mA.pvpTotal) / mA.pvpTotal) * 100 : 0;
+      const badge = document.getElementById('cmp-verdict-badge');
+      if (pvpAdv >= 0) {
+        badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-600/40";
+        badge.textContent = `${objB.name} tem +${pvpAdv.toFixed(1).replace('.', ',')}% mais stats em combate PvP que ${objA.name}`;
+      } else {
+        badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-red-900/60 text-red-300 border border-red-600/40";
+        badge.textContent = `${objB.name} tem ${pvpAdv.toFixed(1).replace('.', ',')}% menos stats em combate PvP que ${objA.name}`;
+      }
+
+      const statRows = [
+        { label: 'HP de Combate (hp × 12)', rawA: mA.hpCombateHunt, rawB: mB.hpCombateHunt, pvpA: mA.hpCombatePvp, pvpB: mB.hpCombatePvp, subHighlight: true },
+        { label: 'Poder Oficial ⚔ (nível × 10 × score)', rawA: mA.poderRanking, rawB: mB.poderRanking, pvpA: mA.poderPvpWiki, pvpB: mB.poderPvpWiki, subHighlight: true },
+        { label: 'HP Base Calculado', rawA: mA.rawStats.hp, rawB: mB.rawStats.hp, pvpA: mA.pvpStats.hp, pvpB: mB.pvpStats.hp },
+        { label: 'ATK (Ataque Físico)', rawA: mA.rawStats.atk, rawB: mB.rawStats.atk, pvpA: mA.pvpStats.atk, pvpB: mB.pvpStats.atk },
+        { label: 'DEF (Defesa Física)', rawA: mA.rawStats.def, rawB: mB.rawStats.def, pvpA: mA.pvpStats.def, pvpB: mB.pvpStats.def },
+        { label: 'SP.ATK (Ataque Especial)', rawA: mA.rawStats.spa, rawB: mB.rawStats.spa, pvpA: mA.pvpStats.spa, pvpB: mB.pvpStats.spa },
+        { label: 'SP.DEF (Defesa Especial)', rawA: mA.rawStats.spd, rawB: mB.rawStats.spd, pvpA: mA.pvpStats.spd, pvpB: mB.pvpStats.spd },
+        { label: 'SPD (Velocidade / Recarga)', rawA: mA.rawStats.spe, rawB: mB.rawStats.spe, pvpA: mA.pvpStats.spe, pvpB: mB.pvpStats.spe },
+        { label: 'SOMA TOTAL DOS 6 STATS', rawA: mA.rawTotal, rawB: mB.rawTotal, pvpA: mA.pvpTotal, pvpB: mB.pvpTotal, highlight: true }
+      ];
+
+      document.getElementById('cmp-result-tbody').innerHTML = statRows.map(r => `
+        <tr class="${r.highlight ? 'bg-purple-950/35 font-extrabold text-white' : (r.subHighlight ? 'bg-emerald-950/20 font-semibold' : '')}">
+          <td class="py-2 px-2">${r.label}</td>
+          <td class="py-2 px-2 text-right text-sky-200">${r.rawA.toLocaleString('pt-BR')}</td>
+          <td class="py-2 px-2 text-right text-amber-200">${r.rawB.toLocaleString('pt-BR')}</td>
+          <td class="py-2 px-2 text-right">${formatDiffPct(r.rawA, r.rawB)}</td>
+          <td class="py-2 px-2 text-right text-sky-300 border-l border-game-border">${r.pvpA.toLocaleString('pt-BR')}</td>
+          <td class="py-2 px-2 text-right text-amber-300 font-bold">${r.pvpB.toLocaleString('pt-BR')}</td>
+          <td class="py-2 px-2 text-right">${formatDiffPct(r.pvpA, r.pvpB)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 9. ABA 3: OUTLAND & CALCULADORA EXATA DE XP CÚBICO
+    // =========================================================================
+    function initOutlandTab() {
+      const selOut = document.getElementById('outland-selector');
+      const selTarget = document.getElementById('xp-target-outland');
+
+      const opts = OUTLANDS_DATA.map(o => `<option value="${o.id}">Outland ${o.id} (Nv ${o.level.toLocaleString('pt-BR')} • ×${o.mult.toFixed(2).replace('.', ',')})</option>`).join('');
+      selOut.innerHTML = opts;
+      selTarget.innerHTML = opts;
+
+      document.getElementById('price-token-gold').value = appState.prices.tokenGold;
+      document.getElementById('price-token-gems').value = appState.prices.tokenGems;
+      document.getElementById('price-frag-gold').value = appState.prices.fragGold;
+      document.getElementById('price-frag-gems').value = appState.prices.fragGems;
+      document.getElementById('outland-apply-tax').checked = appState.applyTax;
+
+      syncOutlandTabWithAccount();
+    }
+
+    function syncOutlandTabWithAccount() {
+      const acc = getActiveAccount();
+      const unlocked = [...OUTLANDS_DATA].reverse().find(o => acc.trainerLevel >= o.level) || OUTLANDS_DATA[0];
+      const nextOut = OUTLANDS_DATA.find(o => o.level > acc.trainerLevel) || OUTLANDS_DATA[OUTLANDS_DATA.length - 1];
+
+      document.getElementById('xp-goal-account-tag').textContent = `${acc.name} (Nv ${acc.trainerLevel.toLocaleString('pt-BR')})`;
+      document.getElementById('xp-cur-lvl').value = acc.trainerLevel;
+      document.getElementById('xp-target-outland').value = nextOut.id;
+      document.getElementById('xp-per-hour').value = acc.xpPerHour || 15000000;
+
+      document.getElementById('outland-selector').value = acc.selectedOutland || unlocked.id;
+      document.getElementById('outland-loot-bonus').value = acc.lootBonus || 0;
+
+      recalcOutlandXpProjection();
+      updateOutlandCalc(true);
+    }
+
+    function recalcOutlandXpProjection() {
+      const curLvl = Math.max(1, Number(document.getElementById('xp-cur-lvl').value) || 1);
+      const targetId = Number(document.getElementById('xp-target-outland').value) || 8;
+      const targetOut = OUTLANDS_DATA.find(o => o.id === targetId) || OUTLANDS_DATA[7];
+      const curUnlocked = [...OUTLANDS_DATA].reverse().find(o => curLvl >= o.level) || OUTLANDS_DATA[0];
+      const xph = Math.max(1, Number(document.getElementById('xp-per-hour').value) || 1);
+      const hoursPerDay = Math.min(24, Math.max(1, Number(document.getElementById('xp-hours-per-day').value) || 24));
+
+      // Fórmula cúbica oficial: xpTotal(L) = arred(50/3 * (L^3 - 6L^2 + 17L - 12))
+      const xpNeeded = xpNecessario(curLvl, targetOut.level);
+      const nextOneLvlXp = xpDoNivel(curLvl + 1);
+      const levelsDiff = Math.max(0, targetOut.level - curLvl);
+      const multGainPct = curUnlocked.mult > 0 ? ((targetOut.mult - curUnlocked.mult) / curUnlocked.mult) * 100 : 0;
+
+      const totalHours = xpNeeded / xph;
+      const days24 = totalHours / 24;
+      const daysCustom = totalHours / hoursPerDay;
+
+      const etaDate = new Date();
+      etaDate.setHours(etaDate.getHours() + Math.round(totalHours));
+      const etaStr = etaDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+      document.getElementById('xp-exact-needed-display').textContent = `${formatLargeXp(xpNeeded)} XP`;
+      document.getElementById('xp-next-lvl-cost').textContent = `Nv ${curLvl} → ${curLvl + 1}: ${formatLargeXp(nextOneLvlXp)} XP`;
+
+      document.getElementById('xp-res-levels').textContent = levelsDiff > 0 ? `+${levelsDiff.toLocaleString('pt-BR')} níveis` : 'Já alcançada!';
+      document.getElementById('xp-res-mult-gain').textContent = multGainPct > 0 ? `Drop sobe +${multGainPct.toFixed(1).replace('.', ',')}% (×${targetOut.mult.toFixed(2).replace('.', ',')})` : `Multiplicador ×${targetOut.mult.toFixed(2).replace('.', ',')}`;
+      document.getElementById('xp-res-hours').textContent = `${totalHours.toFixed(1).replace('.', ',')} horas`;
+      document.getElementById('xp-res-total-str').textContent = `XP Alvo: ${formatLargeXp(xpTotal(targetOut.level))}`;
+      document.getElementById('xp-res-days-24').textContent = `${days24.toFixed(1).replace('.', ',')} dias`;
+      document.getElementById('xp-res-days-custom-lbl').textContent = `Tempo Real (${hoursPerDay}h/dia)`;
+      document.getElementById('xp-res-days-custom').textContent = `${daysCustom.toFixed(1).replace('.', ',')} dias`;
+      document.getElementById('xp-res-eta-date').textContent = `Previsão: ${etaStr}`;
+    }
+
+    function toggleLootBoost40() {
+      const inp = document.getElementById('outland-loot-bonus');
+      inp.value = Number(inp.value) === 40 ? 0 : 40;
+      updateOutlandCalc();
+    }
+
+    function updateOutlandCalc(manualSelect = false) {
+      const acc = getActiveAccount();
+      const trainerLvl = acc.trainerLevel;
+      const killsPerHour = acc.killsPerHour || 1000;
+      const lootBonusPct = Math.max(0, Number(document.getElementById('outland-loot-bonus').value) || 0);
+      const applyTax = document.getElementById('outland-apply-tax').checked;
+
+      const unlockedList = OUTLANDS_DATA.filter(o => trainerLvl >= o.level);
+      const highestUnlocked = unlockedList.length ? unlockedList[unlockedList.length - 1] : OUTLANDS_DATA[0];
+      const nextOutland = OUTLANDS_DATA.find(o => o.level > trainerLvl);
+
+      const sel = document.getElementById('outland-selector');
+      const chosenId = Number(sel.value) || highestUnlocked.id;
+      const chosenOutland = OUTLANDS_DATA.find(o => o.id === chosenId) || highestUnlocked;
+
+      acc.selectedOutland = chosenId;
+      acc.lootBonus = lootBonusPct;
+      appState.applyTax = applyTax;
+      appState.prices = {
+        tokenGold: Number(document.getElementById('price-token-gold').value) || 0,
+        tokenGems: Number(document.getElementById('price-token-gems').value) || 0,
+        fragGold: Number(document.getElementById('price-frag-gold').value) || 0,
+        fragGems: Number(document.getElementById('price-frag-gems').value) || 0
+      };
+      saveState(true);
+
+      const isLocked = trainerLvl < chosenOutland.level;
+      document.getElementById('outland-unlock-banner').innerHTML = `
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-purple-200 font-bold">${acc.name} • Maior Liberada: Outland ${highestUnlocked.id} (×${highestUnlocked.mult.toFixed(2).replace('.', ',')})</span>
+          ${isLocked ? `<span class="bg-red-900/70 text-red-200 px-2 py-0.5 rounded font-semibold">Simulando Bloqueada</span>` : `<span class="bg-emerald-900/70 text-emerald-200 px-2 py-0.5 rounded font-semibold">Liberada</span>`}
+        </div>
+        <div class="text-xs text-gray-300">
+          ${nextOutland ? `Faltam <strong class="text-amber-400">${(nextOutland.level - trainerLvl).toLocaleString('pt-BR')} níveis</strong> (${formatLargeXp(xpNecessario(trainerLvl, nextOutland.level))} XP) para a Outland ${nextOutland.id}.` : `Nível máximo Outland 40 atingido!`}
+        </div>
+      `;
+
+      const totalMult = chosenOutland.mult * (1 + lootBonusPct / 100);
+      const tokenDenom = Math.round(10000 / totalMult);
+      const fragDenom = Math.round(250000 / totalMult);
+
+      document.getElementById('outland-rate-subtitle').textContent =
+        `Outland ${chosenOutland.id} • Multiplicador Efetivo: ×${totalMult.toFixed(2).replace('.', ',')} • ${killsPerHour.toLocaleString('pt-BR')} abates/h`;
+
+      const tokensPerHour = killsPerHour / tokenDenom;
+      const eachFragPerHour = killsPerHour / fragDenom;
+      const taxFactor = applyTax ? 0.85 : 1.0;
+
+      const goldPerHour = (tokensPerHour * appState.prices.tokenGold + 4 * eachFragPerHour * appState.prices.fragGold) * taxFactor;
+      const gemsPerHour = (tokensPerHour * appState.prices.tokenGems + 4 * eachFragPerHour * appState.prices.fragGems) * taxFactor;
+
+      document.getElementById('outland-rev-hour-gold').textContent = `${formatGoldM(goldPerHour)} / h`;
+      document.getElementById('outland-rev-hour-gems').textContent = `${gemsPerHour.toFixed(2).replace('.', ',')} Gemas / h`;
+      document.getElementById('outland-rev-day-gold').textContent = `${formatGoldM(goldPerHour * 24)} / dia`;
+      document.getElementById('outland-rev-day-gems').textContent = `${(gemsPerHour * 24).toFixed(1).replace('.', ',')} Gemas / dia`;
+      document.getElementById('outland-rev-week-gold').textContent = `${formatGoldM(goldPerHour * 168)} / sem`;
+      document.getElementById('outland-rev-week-gems').textContent = `${Math.round(gemsPerHour * 168).toLocaleString('pt-BR')} Gemas / sem`;
+
+      const dropItems = [
+        { name: "Bronze Boss Token", denom: tokenDenom, perHour: tokensPerHour, color: "text-amber-400" },
+        { name: "Fragmento de Bicicleta", denom: fragDenom, perHour: eachFragPerHour, color: "text-emerald-300" },
+        { name: "Fragmento de Chave (Casa)", denom: fragDenom, perHour: eachFragPerHour, color: "text-sky-300" },
+        { name: "Fragmento de Shiny Stone", denom: fragDenom, perHour: eachFragPerHour, color: "text-purple-300" },
+        { name: "Osso do Sacrifício (+100 pts)", denom: fragDenom, perHour: eachFragPerHour, color: "text-gray-200" },
+        { name: "SOMA DOS 4 ITENS RAROS", denom: Math.round(fragDenom / 4), perHour: eachFragPerHour * 4, color: "text-white font-bold", bold: true }
+      ];
+
+      document.getElementById('outland-drops-tbody').innerHTML = dropItems.map(d => {
+        const hrsForOne = d.perHour > 0 ? (1 / d.perHour) : 0;
+        const timeStr = hrsForOne < 24 ? `${hrsForOne.toFixed(1).replace('.', ',')} h` : `${(hrsForOne / 24).toFixed(1).replace('.', ',')} dias`;
+        return `
+          <tr class="${d.bold ? 'bg-purple-950/30' : ''}">
+            <td class="py-2 px-2 ${d.color}">${d.name}</td>
+            <td class="py-2 px-2 text-right text-gray-300">1 em ${d.denom.toLocaleString('pt-BR')}</td>
+            <td class="py-2 px-2 text-right font-bold text-white">${(d.perHour * 24).toFixed(2).replace('.', ',')}</td>
+            <td class="py-2 px-2 text-right text-gray-300">${(d.perHour * 168).toFixed(2).replace('.', ',')}</td>
+            <td class="py-2 px-2 text-right text-gray-400">${timeStr}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('all-outlands-tbody').innerHTML = OUTLANDS_DATA.map(o => {
+        const unlocked = trainerLvl >= o.level;
+        const isCurrent = o.id === chosenOutland.id;
+        return `
+          <tr onclick="document.getElementById('outland-selector').value=${o.id};updateOutlandCalc(true)" class="cursor-pointer transition ${isCurrent ? 'bg-purple-900/40 font-bold' : (unlocked ? 'hover:bg-game-cardHover' : 'opacity-45 hover:opacity-75')}">
+            <td class="py-2 px-3 text-white">Outland ${o.id} ${o.id === highestUnlocked.id ? '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">Atual</span>' : ''}</td>
+            <td class="py-2 px-3 text-gray-300">Nv ${o.level.toLocaleString('pt-BR')}</td>
+            <td class="py-2 px-3 text-sky-300">${formatLargeXp(xpTotal(o.level))}</td>
+            <td class="py-2 px-3 text-purple-300 font-semibold">×${o.mult.toFixed(2).replace('.', ',')}</td>
+            <td class="py-2 px-3 text-amber-300">1 em ${Math.round(10000 / o.mult).toLocaleString('pt-BR')}</td>
+            <td class="py-2 px-3 text-gray-300">1 em ${Math.round(250000 / o.mult).toLocaleString('pt-BR')}</td>
+            <td class="py-2 px-3 text-right">${unlocked ? '<span class="text-emerald-400 font-semibold">Liberada</span>' : '<span class="text-gray-500">Bloqueada</span>'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 10. ABA 4: ROI BOSSES & AUTO-SNIPER + INVENTÁRIO & HISTÓRICO DIÁRIO
+    // =========================================================================
+    function renderBossRoiSection() {
+      const acc = getActiveAccount();
+      if (!Array.isArray(acc.bossRuns)) acc.bossRuns = [];
+
+      const aoeGems = Number(document.getElementById('ev-aoe-gems').value) || 396;
+      const aoeGold = Number(document.getElementById('ev-aoe-gold').value) || 2000;
+      const zmoveGems = Number(document.getElementById('ev-zmove-gems').value) || 153;
+      const zmoveGold = Number(document.getElementById('ev-zmove-gold').value) || 700;
+
+      appState.evRefs = { aoeGems, aoeGold, zmoveGems, zmoveGold };
+      saveState(true);
+
+      const evGemsPerToken = 0.01 * aoeGems + 0.01 * (zmoveGems * 0.85);
+      const evGoldPerToken = 0.01 * aoeGold + 0.01 * (zmoveGold * 0.85);
+
+      const sortedHist = [...acc.history].sort((a, b) => b.date.localeCompare(a.date));
+      const curAoe = sortedHist[0] ? sortedHist[0].aoe : 0;
+      const missingAoe = Math.max(0, 10 - curAoe);
+      const estTokensToFinish = missingAoe * 100;
+
+      document.getElementById('boss-ev-badge').textContent =
+        `EV Atual: ${evGemsPerToken.toFixed(2).replace('.', ',')} Gemas ou ${evGoldPerToken.toFixed(2).replace('.', ',')}M Ouro / token`;
+
+      const maxGemBid = Math.floor(evGemsPerToken);
+      const maxGoldBid = (evGoldPerToken * 0.85).toFixed(1).replace('.', ',');
+
+      document.getElementById('sniper-recommendation-box').innerHTML = `
+        <div>🎯 <strong>Teto Auto-Sniper Gemas:</strong> Até <strong class="text-sky-300">${maxGemBid} Gemas</strong> (lucro esperado de <strong class="text-emerald-300">+${(evGemsPerToken - maxGemBid).toFixed(2).replace('.', ',')}g/token</strong>). Evite pagar ${maxGemBid + 1}g+.</div>
+        <div>🪙 <strong>Teto Auto-Sniper Ouro:</strong> Até <strong class="text-amber-300">${maxGoldBid}M Coins</strong> (margem segura de +15% abaixo do EV de ${evGoldPerToken.toFixed(2).replace('.', ',')}M).</div>
+        <div>🧩 <strong>Meta TM AoE (${curAoe}/10):</strong> Faltam <strong>${missingAoe} peças</strong> (~<strong>${estTokensToFinish} tentativas médias</strong> nos bosses).</div>
+      `;
+
+      let totTokens = 0, totCostG = 0, totAoe = 0, totZ = 0, totNetGems = 0;
+
+      document.getElementById('boss-runs-tbody').innerHTML = acc.bossRuns.map((run, idx) => {
+        const costTotal = run.tokens * run.costPerTokenGems;
+        const valGained = run.aoe * aoeGems + run.zmove * (zmoveGems * 0.85);
+        const net = valGained - costTotal;
+
+        totTokens += run.tokens;
+        totCostG += costTotal;
+        totAoe += run.aoe;
+        totZ += run.zmove;
+        totNetGems += net;
+
+        return `
+          <tr>
+            <td class="py-1.5 px-2 text-gray-200">${run.date.split('-').reverse().join('/')}</td>
+            <td class="py-1.5 px-2 font-bold text-white">${run.tokens}</td>
+            <td class="py-1.5 px-2 text-sky-300">${costTotal.toFixed(0)}g (${run.costPerTokenGems}g/un)</td>
+            <td class="py-1.5 px-2"><span class="text-emerald-400 font-bold">${run.aoe} AoE</span> • <span class="text-purple-300">${run.zmove} Z</span></td>
+            <td class="py-1.5 px-2 text-right font-extrabold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}">${net >= 0 ? '+' : ''}${net.toFixed(1).replace('.', ',')}g</td>
+            <td class="py-1.5 px-2 text-right"><button onclick="deleteBossRun(${idx})" class="text-red-400 hover:underline cursor-pointer">✕</button></td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="6" class="py-2 px-2 text-center text-gray-500">Nenhuma bateria registrada nesta conta ainda.</td></tr>`;
+
+      const aoeRate = totTokens > 0 ? ((totAoe / totTokens) * 100).toFixed(2).replace('.', ',') : '0,00';
+      const zRate = totTokens > 0 ? ((totZ / totTokens) * 100).toFixed(2).replace('.', ',') : '0,00';
+
+      document.getElementById('boss-cumulative-kpis').innerHTML = `
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-[10px] text-gray-400">Tokens Gastos (Total)</div>
+          <div class="text-sm font-extrabold text-white mt-0.5">${totTokens} tokens</div>
+          <div class="text-[10px] text-sky-300">Custo: ${totCostG.toFixed(0)}g</div>
+        </div>
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-[10px] text-gray-400">Taxa Real AoE (Média 1%)</div>
+          <div class="text-sm font-extrabold text-emerald-400 mt-0.5">${totAoe} AoE (${aoeRate}%)</div>
+        </div>
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-[10px] text-gray-400">Taxa Real Z-Move (Média 1%)</div>
+          <div class="text-sm font-extrabold text-purple-300 mt-0.5">${totZ} Z (${zRate}%)</div>
+        </div>
+        <div class="bg-game-bg border border-emerald-500/40 rounded-xl p-2.5">
+          <div class="text-[10px] text-gray-400">Lucro Líquido Acumulado</div>
+          <div class="text-sm font-extrabold ${totNetGems >= 0 ? 'text-emerald-400' : 'text-red-400'} mt-0.5">${totNetGems >= 0 ? '+' : ''}${totNetGems.toFixed(1).replace('.', ',')} Gemas</div>
+        </div>
+      `;
+    }
+
+    function addBossRunEntry(e) {
+      e.preventDefault();
+      const acc = getActiveAccount();
+      if (!Array.isArray(acc.bossRuns)) acc.bossRuns = [];
+      acc.bossRuns.push({
+        id: Date.now(),
+        date: document.getElementById('boss-run-date').value || getTodayISO(),
+        tokens: Number(document.getElementById('boss-run-tokens').value) || 100,
+        costPerTokenGems: Number(document.getElementById('boss-run-cost-gems').value) || 4,
+        aoe: Number(document.getElementById('boss-run-aoe').value) || 0,
+        zmove: Number(document.getElementById('boss-run-zmove').value) || 0
+      });
+      saveState();
+      renderBossRoiSection();
+    }
+
+    function deleteBossRun(idx) {
+      const acc = getActiveAccount();
+      acc.bossRuns.splice(idx, 1);
+      saveState();
+      renderBossRoiSection();
+    }
+
+    function syncAccountStateIntoHistoryForm() {
+      const acc = getActiveAccount();
+      const sorted = [...acc.history].sort((a, b) => b.date.localeCompare(a.date));
+      const latest = sorted[0] || { aoe: 0, zmove: 0, tokens: 0, bike: 0, key: 0, shinystone: 0, bone: 0, mega: 0, refine: 0 };
+
+      document.getElementById('hist-date').value = getTodayISO();
+      document.getElementById('boss-run-date').value = getTodayISO();
+      document.getElementById('hist-trainer-lvl').value = acc.trainerLevel;
+      document.getElementById('hist-gold').value = acc.gold;
+      document.getElementById('hist-gems').value = acc.gems;
+      document.getElementById('hist-aoe').value = latest.aoe;
+      document.getElementById('hist-zmove').value = latest.zmove;
+      document.getElementById('hist-tokens').value = latest.tokens;
+      document.getElementById('hist-bike').value = latest.bike;
+      document.getElementById('hist-key').value = latest.key;
+      document.getElementById('hist-shinystone').value = latest.shinystone;
+      document.getElementById('hist-bone').value = latest.bone;
+      document.getElementById('hist-mega').value = latest.mega;
+      document.getElementById('hist-refine').value = latest.refine;
+      document.getElementById('hist-notes').value = "";
+    }
+
+    function quickSaveSnapshotFromTab1() {
+      syncAccountStateIntoHistoryForm();
+      document.getElementById('hist-notes').value = "Snapshot rápido salvo pela aba Equipe";
+      saveHistoryEntry(new Event('submit'));
+    }
+
+    function saveHistoryEntry(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const acc = getActiveAccount();
+      const totalPvpPower = acc.team.reduce((sum, p) => sum + (Number(p.pvpPower) || 0), 0);
+      const totalRankingPower = acc.team.reduce((sum, p) => sum + calculatePokemonWikiMetrics(p).poderRanking, 0);
+
+      const entry = {
+        date: document.getElementById('hist-date').value || getTodayISO(),
+        trainerLevel: Number(document.getElementById('hist-trainer-lvl').value) || acc.trainerLevel,
+        gold: Number(document.getElementById('hist-gold').value) || 0,
+        gems: Number(document.getElementById('hist-gems').value) || 0,
+        aoe: Number(document.getElementById('hist-aoe').value) || 0,
+        zmove: Number(document.getElementById('hist-zmove').value) || 0,
+        tokens: Number(document.getElementById('hist-tokens').value) || 0,
+        bike: Number(document.getElementById('hist-bike').value) || 0,
+        key: Number(document.getElementById('hist-key').value) || 0,
+        shinystone: Number(document.getElementById('hist-shinystone').value) || 0,
+        bone: Number(document.getElementById('hist-bone').value) || 0,
+        mega: Number(document.getElementById('hist-mega').value) || 0,
+        refine: Number(document.getElementById('hist-refine').value) || 0,
+        pvpPower: totalPvpPower,
+        rankingPower: totalRankingPower,
+        notes: document.getElementById('hist-notes').value.trim(),
+        teamSnapshot: acc.team.map(p => ({
+          name: p.name,
+          level: p.level,
+          potency: p.potency,
+          shiny: !!p.shiny,
+          refine: p.refine,
+          rankingPower: calculatePokemonWikiMetrics(p).poderRanking,
+          pvpPower: p.pvpPower || 0
+        }))
+      };
+
+      acc.trainerLevel = entry.trainerLevel;
+      acc.gold = entry.gold;
+      acc.gems = entry.gems;
+
+      const idx = acc.history.findIndex(h => h.date === entry.date);
+      if (idx >= 0) acc.history[idx] = entry;
+      else acc.history.push(entry);
+
+      saveState();
+      renderAccountAndTeamTab();
+      renderBossRoiSection();
+      renderHistorySection();
+      renderHistoryChart();
+    }
+
+    function openTeamSnapshotModal(dateStr) {
+      const acc = getActiveAccount();
+      const row = acc.history.find(h => h.date === dateStr);
+      if (!row) return;
+
+      document.getElementById('snapshot-modal-title').textContent = `Equipe de ${acc.name} em ${dateStr.split('-').reverse().join('/')}`;
+      document.getElementById('snapshot-modal-subtitle').textContent =
+        `Treinador Nv ${row.trainerLevel.toLocaleString('pt-BR')} • Poder PvP Total: ${(row.pvpPower || 0).toLocaleString('pt-BR')} • Poder ⚔: ${(row.rankingPower || 0).toLocaleString('pt-BR')}`;
+
+      const snap = row.teamSnapshot || [];
+      document.getElementById('snapshot-modal-body').innerHTML = snap.length ? `
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="border-b border-game-border text-gray-400">
+              <th class="py-2 px-2">Pokémon</th>
+              <th class="py-2 px-2">Nível Real</th>
+              <th class="py-2 px-2">Nível PvP</th>
+              <th class="py-2 px-2">Potência</th>
+              <th class="py-2 px-2">Refino</th>
+              <th class="py-2 px-2 text-right">Poder Ranking ⚔</th>
+              <th class="py-2 px-2 text-right">Poder na Luta (PvP)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-game-border/50">
+            ${snap.map(p => `
+              <tr>
+                <td class="py-2 px-2 font-bold text-white">${p.shiny ? '✨ ' : ''}${p.name}</td>
+                <td class="py-2 px-2 text-gray-200">Nv ${Number(p.level).toLocaleString('pt-BR')}</td>
+                <td class="py-2 px-2 text-amber-400">Nv ${Math.round(nivelComprimido(p.level))}</td>
+                <td class="py-2 px-2"><span class="p-badge-${p.potency} px-1.5 py-0.5 rounded text-[10px] font-bold">${p.potency}</span></td>
+                <td class="py-2 px-2 text-emerald-400">+${p.refine || 0}</td>
+                <td class="py-2 px-2 text-right font-bold text-amber-300">${(Number(p.rankingPower) || 0).toLocaleString('pt-BR')}</td>
+                <td class="py-2 px-2 text-right font-extrabold text-emerald-400">${(Number(p.pvpPower) || 0).toLocaleString('pt-BR')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : `<p class="text-xs text-gray-400">Nenhum retrato de equipe salvo nesta data.</p>`;
+
+      document.getElementById('team-snapshot-modal').classList.remove('hidden');
+    }
+
+    function deleteHistoryDate(dateStr) {
+      const acc = getActiveAccount();
+      acc.history = acc.history.filter(h => h.date !== dateStr);
+      saveState();
+      renderHistorySection();
+      renderHistoryChart();
+    }
+
+    function formatDeltaBadge(val, suffix = '') {
+      if (!val || Math.abs(val) < 0.01) return '';
+      const sign = val > 0 ? '+' : '';
+      const color = val > 0 ? 'text-emerald-400' : 'text-red-400';
+      return `<span class="block text-[10px] font-bold ${color}">${sign}${Number.isInteger(val) ? val.toLocaleString('pt-BR') : val.toFixed(1).replace('.', ',')}${suffix}</span>`;
+    }
+
+    function renderHistorySection() {
+      const acc = getActiveAccount();
+      const sortedDesc = [...acc.history].sort((a, b) => b.date.localeCompare(a.date));
+      const latest = sortedDesc[0] || { aoe: 0, bike: 0, key: 0, shinystone: 0, gold: 0, gems: 0, pvpPower: 0, rankingPower: 0 };
+
+      const goals = [
+        { title: "AoE TM Disk Piece", cur: latest.aoe, target: 10, color: "bg-emerald-500", text: "text-emerald-400" },
+        { title: "Fragmento de Bicicleta", cur: latest.bike, target: 10, color: "bg-amber-500", text: "text-amber-400" },
+        { title: "Fragmento de Chave (Casa)", cur: latest.key, target: 10, color: "bg-sky-500", text: "text-sky-400" },
+        { title: "Fragmento de Shiny Stone", cur: latest.shinystone, target: 10, color: "bg-purple-500", text: "text-purple-400" }
+      ];
+
+      document.getElementById('inventory-progress-cards').innerHTML = goals.map(g => {
+        const pct = Math.min(100, (g.cur / g.target) * 100);
+        return `
+          <div class="bg-game-card border border-game-border rounded-2xl p-4">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-300 font-semibold">${g.title}</span>
+              <span class="font-extrabold ${g.text}">${g.cur} / ${g.target}</span>
+            </div>
+            <div class="w-full h-2.5 bg-game-bg rounded-full overflow-hidden mt-2 border border-game-border">
+              <div class="h-full ${g.color} transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('history-table-tbody').innerHTML = sortedDesc.map((row, i) => {
+        const prev = sortedDesc[i + 1];
+        const dPower = prev ? (row.pvpPower || 0) - (prev.pvpPower || 0) : 0;
+        const dRank = prev ? (row.rankingPower || 0) - (prev.rankingPower || 0) : 0;
+        const dGold = prev ? row.gold - prev.gold : 0;
+        const dGems = prev ? row.gems - prev.gems : 0;
+        const dAoe = prev ? row.aoe - prev.aoe : 0;
+
+        return `
+          <tr class="hover:bg-game-cardHover/60 transition">
+            <td class="py-2.5 px-2 font-bold text-white whitespace-nowrap">${row.date.split('-').reverse().join('/')}</td>
+            <td class="py-2.5 px-2 text-amber-300 font-semibold">Nv ${row.trainerLevel.toLocaleString('pt-BR')}</td>
+            <td class="py-2.5 px-2 font-extrabold text-emerald-400">${(row.pvpPower || 0).toLocaleString('pt-BR')}${formatDeltaBadge(dPower)}</td>
+            <td class="py-2.5 px-2 font-bold text-amber-300">${(row.rankingPower || 0).toLocaleString('pt-BR')}${formatDeltaBadge(dRank)}</td>
+            <td class="py-2.5 px-2 font-bold text-amber-400">${formatGoldM(row.gold)}${formatDeltaBadge(dGold, 'M')}</td>
+            <td class="py-2.5 px-2 font-bold text-sky-400">${row.gems.toLocaleString('pt-BR')}g${formatDeltaBadge(dGems, 'g')}</td>
+            <td class="py-2.5 px-2 font-extrabold text-emerald-300">${row.aoe}/10${formatDeltaBadge(dAoe)}</td>
+            <td class="py-2.5 px-2 text-gray-200">${row.zmove}Z • ${row.tokens}T</td>
+            <td class="py-2.5 px-2 text-gray-400 max-w-[150px] truncate" title="${row.notes || ''}">${row.notes || '—'}</td>
+            <td class="py-2.5 px-2 text-right whitespace-nowrap space-x-1">
+              <button onclick="openTeamSnapshotModal('${row.date}')" class="bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-700/50 text-emerald-300 px-2 py-1 rounded text-[11px] font-semibold cursor-pointer">Ver Time</button>
+              <button onclick="deleteHistoryDate('${row.date}')" class="bg-game-bg hover:bg-red-950/60 border border-game-border text-red-400 px-2 py-1 rounded text-[11px] cursor-pointer">Excluir</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('history-summary-footer').innerHTML = `
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-gray-400 text-[11px]">Poder PvP / Poder ⚔</div>
+          <div class="font-extrabold text-emerald-400 text-sm mt-0.5">${(latest.pvpPower || 0).toLocaleString('pt-BR')} • <span class="text-amber-300">${(latest.rankingPower || 0).toLocaleString('pt-BR')}</span></div>
+        </div>
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-gray-400 text-[11px]">Saldo Atual (Ouro / Gemas)</div>
+          <div class="font-extrabold text-amber-400 text-sm mt-0.5">${formatGoldM(latest.gold)} • <span class="text-sky-400">${latest.gems}g</span></div>
+        </div>
+        <div class="bg-game-bg border border-game-border rounded-xl p-2.5">
+          <div class="text-gray-400 text-[11px]">Snapshots Salvos</div>
+          <div class="font-extrabold text-purple-300 text-sm mt-0.5">${sortedDesc.length} datas</div>
+        </div>
+      `;
+    }
+
+    function setChartMetric(metric) {
+      currentChartMetric = metric;
+      document.querySelectorAll('.chart-metric-btn').forEach(btn => {
+        if (btn.dataset.metric === metric) {
+          btn.className = 'chart-metric-btn bg-emerald-900/70 border border-emerald-500 text-emerald-200 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer';
+        } else {
+          btn.className = 'chart-metric-btn bg-game-bg border border-game-border text-gray-400 text-xs px-2.5 py-1 rounded-lg font-semibold cursor-pointer';
+        }
+      });
+      renderHistoryChart();
+    }
+
+    function renderHistoryChart() {
+      const ctx = document.getElementById('history-chart');
+      if (!ctx) return;
+
+      const acc = getActiveAccount();
+      const sortedAsc = [...acc.history].sort((a, b) => a.date.localeCompare(b.date));
+      const labels = sortedAsc.map(d => d.date.slice(5).split('-').reverse().join('/'));
+      const dataVals = sortedAsc.map(d => Number(d[currentChartMetric]) || 0);
+
+      const metaMap = {
+        pvpPower: { label: 'Poder na Luta Total (PvP)', color: '#10b981' },
+        rankingPower: { label: 'Poder Ranking Total (⚔)', color: '#fbbf24' },
+        gems: { label: 'Gemas em Caixa', color: '#38bdf8' },
+        gold: { label: 'Ouro (Milhões M)', color: '#f59e0b' },
+        aoe: { label: 'Fragmentos TM AoE (/10)', color: '#a855f7' }
+      };
+      const meta = metaMap[currentChartMetric] || metaMap.pvpPower;
+
+      if (historyChartInstance) historyChartInstance.destroy();
+
+      historyChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: meta.label,
+            data: dataVals,
+            borderColor: meta.color,
+            backgroundColor: meta.color + '28',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: '#110d17',
+            pointBorderColor: meta.color,
+            pointBorderWidth: 2.5,
+            fill: true,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } }
+          },
+          scales: {
+            x: { ticks: { color: '#9ca3af', font: { size: 11 } }, grid: { color: '#2a1f38' } },
+            y: { ticks: { color: '#9ca3af', font: { size: 11 } }, grid: { color: '#2a1f38' } }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // 11. BACKUP JSON & INICIALIZAÇÃO
+    // =========================================================================
+    function exportData() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pokeidle-4contas-backup-${getTodayISO()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Backup JSON das 4 contas exportado!");
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && Array.isArray(imported.accounts)) {
+            appState = imported;
+            saveState();
+            refreshAllTabsForActiveAccount();
+            showToast("Backup restaurado com sucesso!");
+          } else {
+            showToast("Formato de arquivo JSON inválido.");
+          }
+        } catch (err) {
+          showToast("Erro ao ler arquivo JSON.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmReset() {
+      localStorage.removeItem(STORAGE_KEY);
+      appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      saveState();
+      refreshAllTabsForActiveAccount();
+      showToast("Dados restaurados para o padrão oficial!");
+    }
+
+    function refreshAllTabsForActiveAccount() {
+      renderAccountSwitcher();
+      renderAccountAndTeamTab();
+      syncOutlandTabWithAccount();
+      syncAccountStateIntoHistoryForm();
+      renderBossRoiSection();
+      renderHistorySection();
+      renderHistoryChart();
+      renderComparison();
+    }
+
+    window.onload = function() {
+      const formSpSel = document.getElementById('form-species-preset');
+      formSpSel.innerHTML = Object.keys(SPECIES_PRESETS).map(sp => `<option value="${sp}">${sp}</option>`).join('');
+
+      const t1Sel = document.getElementById('form-type1');
+      const t2Sel = document.getElementById('form-type2');
+      t1Sel.innerHTML = ALL_TYPES.map(t => `<option value="${t}">${TYPE_LABELS_PT[t]}</option>`).join('');
+      t2Sel.innerHTML = `<option value="NONE">-- Nenhum --</option>` + ALL_TYPES.map(t => `<option value="${t}">${TYPE_LABELS_PT[t]}</option>`).join('');
+
+      if (appState.evRefs) {
+        document.getElementById('ev-aoe-gems').value = appState.evRefs.aoeGems;
+        document.getElementById('ev-aoe-gold').value = appState.evRefs.aoeGold;
+        document.getElementById('ev-zmove-gems').value = appState.evRefs.zmoveGems;
+        document.getElementById('ev-zmove-gold').value = appState.evRefs.zmoveGold;
+      }
+
+      initCompareTab();
+      initOutlandTab();
+      refreshAllTabsForActiveAccount();
+    };
+  </script>
+</body>
+</html>
